@@ -21,6 +21,8 @@
 
 In-memory 대체 DB는 사용하지 않습니다. SQLite 자체의 잠금과 제약을 검증해야 하므로 테스트마다 임시 파일 DB를 사용합니다.
 
+테스트 배치는 프로덕션 구조를 따라 `Controllers`에는 Handler 연결 테스트, `Services`에는 업무 규칙·Repository·동시성 테스트를 둡니다. 공용 TestServer Factory와 데이터 생성기는 루트 `Fixtures`, 프로토콜 적합성은 `Rpc`, 설정·DB·로그는 `Infrastructure`에 둡니다. 기존 `Features/*` 빈 폴더에는 새 테스트를 추가하지 않습니다.
+
 ## 3. JSON-RPC 적합성 매트릭스
 
 ### Request
@@ -140,10 +142,10 @@ In-memory 대체 DB는 사용하지 않습니다. SQLite 자체의 잠금과 제
 
 ## 7. 계약 fixture
 
-`tests/.../Rpc/Fixtures`에 요청과 기대 응답 JSON을 저장할 수 있습니다.
+`tests/SummerProject.Server.Tests/Fixtures/Rpc`에 요청과 기대 응답 JSON을 저장할 수 있습니다.
 
 ```text
-Rpc/Fixtures/
+Fixtures/Rpc/
 ├─ valid-single-request.json
 ├─ invalid-empty-batch.json
 ├─ mixed-batch-request.json

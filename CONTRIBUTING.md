@@ -4,6 +4,8 @@
 
 - 새 구현은 `src/SummerProject.Server`에만 작성한다.
 - 기존 분리 서버 코드는 기능 확인용이며 새 코드의 구조나 이름을 복사하지 않는다.
+- RPC Handler는 `Controllers`, 업무 규칙과 Repository는 `Services`, DTO와 DB 행 모델은 각각 `Models/DTOs`, `Models/Datas`에 둔다.
+- 정적 맵·스테이지 카탈로그는 `GameData/Catalogs`에 두고 `Features`, `Content` 폴더를 새로 만들지 않는다.
 - 한 변경은 하나 이상의 요구사항 ID와 연결한다.
 - 계약, 구현, 테스트, 추적성 문서를 함께 변경한다.
 
@@ -45,6 +47,8 @@ docs(database): SQLite 인덱스 정책 명시
 - 요구사항 밖의 기능을 임의로 추가하지 않았는가?
 - JSON-RPC 알림, id, batch 규칙을 훼손하지 않았는가?
 - DTO와 DB 모델이 분리되어 있는가?
+- Controller가 업무 규칙이나 SQL을 직접 수행하지 않는가?
+- 새 파일이 현재 `Controllers`·`Services`·`Models`·`GameData` 구조의 올바른 위치에 있는가?
 - SQL이 매개변수화되어 있는가?
 - 동시성 변경에 트랜잭션 또는 원자적 조건절이 있는가?
 - 토큰과 개인정보가 로그에 포함되지 않는가?

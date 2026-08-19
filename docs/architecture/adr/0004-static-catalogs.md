@@ -9,7 +9,7 @@
 
 ## 결정
 
-- 맵과 스테이지는 `Content/Catalogs`의 JSON 파일로 유지합니다.
+- 맵과 스테이지는 각각 `GameData/Catalogs/Maps`, `GameData/Catalogs/Stages`의 JSON 파일로 유지합니다.
 - `System.Text.Json`으로 읽습니다.
 - 시작 시 전체 파일을 읽고 ID 중복, 스키마, 수치 범위, 좌표와 회전을 검증합니다.
 - 검증 실패 시 서버 시작을 실패시킵니다.

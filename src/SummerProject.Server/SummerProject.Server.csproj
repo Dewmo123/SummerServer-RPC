@@ -18,7 +18,8 @@
 
   <ItemGroup>
     <Folder Include="Controllers\" />
-    <Folder Include="Models\" />
+    <Folder Include="Models\Datas\" />
+    <Folder Include="Models\DTOs\" />
     <Folder Include="Services\" />
   </ItemGroup>
 

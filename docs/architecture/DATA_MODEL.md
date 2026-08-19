@@ -5,7 +5,7 @@
 - 하나의 SQLite DB 파일을 사용합니다.
 - 모든 연결에서 외래 키를 활성화합니다.
 - SQL은 Dapper 매개변수로 실행합니다.
-- 정적 맵과 스테이지 정의는 DB가 아니라 `Content/Catalogs` JSON 파일에 저장합니다.
+- 정적 맵과 스테이지 정의는 DB가 아니라 `GameData/Catalogs/Maps`, `GameData/Catalogs/Stages` JSON 파일에 저장합니다.
 - 시간은 UTC Unix milliseconds를 SQLite `INTEGER`로 저장하고 외부에서는 ISO 8601로 변환합니다.
 - 내부 숫자 ID는 C# `long`, SQLite `INTEGER`를 사용합니다.
 - GUID는 정규화한 소문자 문자열 `TEXT`, 토큰 해시는 32바이트 `BLOB`으로 저장합니다.
@@ -165,10 +165,10 @@ PRAGMA journal_mode = WAL;
 
 ## 11. 마이그레이션
 
-목표 위치:
+현재 위치:
 
 ```text
-Infrastructure/Database/Migrations/
+src/SummerProject.Server/Infrastructure/Database/Migrations/
 ├─ 0001_initial.sql
 ├─ 0002_seed_development_user.sql
 └─ ...

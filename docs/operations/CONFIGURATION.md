@@ -39,7 +39,7 @@
     "Username": "Developer"
   },
   "Catalog": {
-    "RootPath": "Content/Catalogs"
+    "RootPath": "GameData/Catalogs"
   },
   "RateLimits": {
     "LoginPermitLimit": 10,
@@ -81,7 +81,7 @@
 | `Google:ClientIds` | 운영 Google 로그인 시 | 빈 배열 | 하나 이상의 허용 audience |
 | `DevelopmentLogin:Enabled` | 아니요 | false | Development 환경에서만 효력 |
 | `DevelopmentLogin:Username` | 개발 로그인 시 | Developer | DB seed와 일치 |
-| `Catalog:RootPath` | 예 | `Content/Catalogs` | publish 결과에 포함 |
+| `Catalog:RootPath` | 예 | `GameData/Catalogs` | publish 결과에 포함 |
 | `RateLimits:*` | 예 | 표 참조 | 양수 |
 
 ## 4. 환경 변수 예시
@@ -118,6 +118,7 @@ Google Client ID 자체는 일반적으로 비밀이 아니지만 환경별 설�
 - 절대 DB 경로는 그대로 정규화해 사용하며 서버 시작 시 상위 디렉터리가 없으면 생성합니다.
 - 허용 데이터 디렉터리의 별도 경계 설정은 목표 배포 경로가 확정된 뒤 추가합니다. 현재 운영자는 서비스 계정 전용 경로와 최소 OS 권한을 사용해야 합니다.
 - 카탈로그 경로는 읽기 전용이며 publish 산출물에 포함합니다.
+- 상대 카탈로그 경로는 `src/SummerProject.Server`의 Content Root를 기준으로 해석합니다.
 - 로그 파일을 사용할 경우 DB와 다른 운영 디렉터리에 두고 회전 정책을 적용합니다.
 
 ## 7. 로그 환경별 권장값

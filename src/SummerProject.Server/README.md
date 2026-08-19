@@ -11,21 +11,26 @@
 | `Rpc/Dispatching` | 메서드 Registry와 Handler 호출 |
 | `Rpc/Serialization` | id 보존과 result/error 직렬화 |
 | `Rpc/Validation` | Request Object와 params 검증 |
-| `Features/Auth` | Google/JWT/리프레시 토큰/로그아웃 |
-| `Features/Characters` | 캐릭터 조회와 성장 |
-| `Features/Currencies` | 재화 조회와 원자적 변경 |
-| `Features/Stages` | 카탈로그 조회, 입장, 완료, 보상 |
-| `Features/Rooms` | 방 배치 검증과 저장 |
+| `Controllers` | 기능별 JSON-RPC Handler와 요청 진입 조정 |
+| `Services` | 인증·캐릭터·재화·스테이지·방 업무 규칙과 Repository |
+| `Models/DTOs` | RPC Request·Response·Packet |
+| `Models/Datas` | Dapper DB 행 매핑 Model |
+| `Models` | 공통 값 객체와 열거형 |
 | `Infrastructure/Database` | SQLite, Dapper, 마이그레이션 |
 | `Infrastructure/Logging` | ZLogger와 민감정보 필터 |
 | `Infrastructure/Security` | JWT, 암호학, Google 검증 Adapter |
-| `Content/Catalogs` | 정적 맵과 스테이지 JSON |
+| `GameData/Catalogs/Maps` | 정적 맵 JSON과 Map Catalog |
+| `GameData/Catalogs/Stages` | 정적 스테이지 JSON과 Stage Catalog |
+| `Extensions` | 구체적인 등록·변환 확장 메서드 |
 | `Common` | 두 개 이상의 기능에서 의미가 같은 최소 공통 타입 |
+| `Properties` | 어셈블리·로컬 실행 설정 |
 
 ## 금지 사항
 
 - 이 폴더 아래에 기능별 `.csproj`를 추가하지 않습니다.
 - 기존 Controller, DbContext, Entity 파일을 복사하지 않습니다.
+- `Controllers`에서 업무 규칙이나 SQL을 직접 실행하지 않습니다.
+- `Features`, `Content` 폴더를 새 구현 위치로 만들지 않습니다.
 - DB Model을 Response로 직접 반환하지 않습니다.
 - `Common`을 미분류 코드의 임시 보관소로 사용하지 않습니다.
 

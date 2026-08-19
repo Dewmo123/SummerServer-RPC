@@ -30,6 +30,7 @@
 
 - 기존 로그인·게임·영속성 프로젝트의 기능을 개념 단위로 분석했습니다.
 - JSON-RPC 2.0, Dapper, SQLite, ZLogger 기반 모노리스 목표 구조를 정의했습니다.
+- 목표 코드 위치를 현재 `Controllers`, `Services`, `Models`, `GameData`, `Infrastructure`, `Rpc` 폴더 구조로 통일했습니다.
 - 인증, 캐릭터, 재화, 스테이지, 사용자 방 기능의 요구사항과 RPC 계약을 작성했습니다.
 - AI 작업 지침, 네이밍, 한국어 주석, 테스트, 커밋 메시지 규칙을 추가했습니다.
 

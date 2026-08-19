@@ -13,7 +13,7 @@
 ## 2. 인증 경계
 
 - Bearer JWT는 HTTP 계층에서 검증하고 `CallerProto`로 정규화합니다.
-- Handler는 `ClaimsPrincipal`과 HTTP 객체를 직접 읽지 않습니다.
+- `Controllers`의 Handler는 `ClaimsPrincipal`과 HTTP 객체를 직접 읽지 않고 정규화된 호출자 문맥을 Service에 전달합니다.
 - `sub`는 내부 사용자 ID로 파싱하고 사용자 존재 여부를 업무 계층에서 확인합니다.
 - 발급자, 대상, 수명, 서명 키를 모두 검증합니다.
 - 기본 액세스 토큰 수명은 60분, 허용 시계 오차는 30초입니다.

@@ -6,6 +6,8 @@
 - 프로토콜 코어를 먼저 완성한 뒤 기능을 한 영역씩 수직 구현합니다.
 - 각 단계는 코드, 테스트, 문서 추적성을 함께 완료해야 다음 단계로 넘어갑니다.
 - 새 구현이 동작할 때까지 기존 서버를 삭제하거나 이동하지 않습니다.
+- JSON-RPC Handler는 `Controllers`, 업무 Service와 Repository는 `Services`, DTO와 DB 행 Model은 각각 `Models/DTOs`, `Models/Datas`에 둡니다.
+- 맵·스테이지 정적 파일과 Catalog는 `GameData/Catalogs`에 두며 새 `Features`, `Content` 폴더를 만들지 않습니다.
 
 ## Phase 0. 저장소 기반 정리
 
@@ -85,6 +87,7 @@
 
 작업:
 
+- `GameData/Catalogs/Maps`, `GameData/Catalogs/Stages` 경로 사용
 - Map/Stage JSON 스키마와 Packet/Proto 분리
 - `System.Text.Json` 카탈로그 Loader
 - ID 중복, 크기, 배열, 함정, 보상 검증
@@ -101,10 +104,10 @@
 
 순서:
 
-1. 사용자 Model/Repository
-2. JWT 발급과 검증, `CallerProto`
-3. Google 로그인
-4. 리프레시 토큰 Model/Repository
+1. `Models/Datas/Auth` 사용자 Model과 `Services/Auth` Repository
+2. `Infrastructure/Security`의 JWT 발급·검증과 `Models/Auth/CallerProto`
+3. `Controllers/Auth` Google 로그인 Handler
+4. `Models/Datas/Auth` 리프레시 토큰 Model과 `Services/Auth` Repository
 5. 토큰 생성·회전·재사용 탐지
 6. 로그아웃
 7. 개발 환경 로그인
@@ -213,8 +216,8 @@
   - RPC_METHOD_CATALOG.md#stagecomplete
   - DATA_MODEL.md#stage_runs
 - 구현:
-  - CompleteStageHandler
-  - StageRunRepository 조건부 완료
+  - `Controllers/Stages/CompleteStageHandler`
+  - `Services/Stages/StageRunRepository` 조건부 완료
   - 보상 트랜잭션 조정
 - 테스트:
   - 정상 완료

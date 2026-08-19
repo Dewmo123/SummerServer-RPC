@@ -23,7 +23,7 @@ dotnet publish src/SummerProject.Server `
 배포 전 확인:
 
 - 테스트 전체 성공
-- `Content/Catalogs`가 publish에 포함됨
+- `GameData/Catalogs`가 publish에 포함됨
 - `appsettings.json`에 비밀값이 없음
 - `.db`, WAL, SHM, 로그가 산출물에 포함되지 않음
 - 변경된 DB 마이그레이션과 체크섬 검토

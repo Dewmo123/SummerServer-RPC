@@ -34,11 +34,11 @@
 | 배치 | Batch | 하나 이상의 JSON-RPC 요청을 담은 배열 |
 | 프로토콜 오류 | ProtocolError | 파싱, 요청 형식, 메서드, params 등 JSON-RPC 처리 자체의 실패 |
 | 업무 오류 | ApplicationError | 유효한 RPC 호출이 업무 조건을 만족하지 못한 실패 |
-| 값 객체 | Proto | 값과 불변 조건으로 의미가 정해지는 도메인 개체. 이 프로젝트의 `Proto`는 Protobuf가 아님 |
-| DB 모델/DAO 데이터 | Model | 요구사항의 DAO 범주에 해당하며 Dapper가 SQLite 행에 매핑하는 영속성 전용 개체 |
-| 요청 DTO | Request | RPC 메서드의 params를 표현하는 외부 계약 타입 |
-| 응답 DTO | Response | RPC 메서드의 result를 표현하는 외부 계약 타입 |
-| 패킷 | Packet | Request 또는 Response 안에서 재사용하는 구성 타입 |
+| 값 객체 | Proto | `Models`에 두며 값과 불변 조건으로 의미가 정해지는 도메인 개체. 이 프로젝트의 `Proto`는 Protobuf가 아님 |
+| DB 모델/DAO 데이터 | Model | `Models/Datas`에 두며 Dapper가 SQLite 행에 매핑하는 영속성 전용 개체 |
+| 요청 DTO | Request | `Models/DTOs`에 두며 RPC 메서드의 params를 표현하는 외부 계약 타입 |
+| 응답 DTO | Response | `Models/DTOs`에 두며 RPC 메서드의 result를 표현하는 외부 계약 타입 |
+| 패킷 | Packet | `Models/DTOs`에 두며 Request 또는 Response 안에서 재사용하는 구성 타입 |
 
 ## 이름을 분리해야 하는 개념
 
@@ -50,4 +50,4 @@
 
 ## 금지되는 모호한 용어
 
-새 타입 이름에 `Data`, `Info`, `Manager`, `Helper`, `Util`, `CommonModel`, `BaseDto`를 사용하지 않습니다. 역할을 `Catalog`, `Repository`, `Handler`, `Factory`, `Validator`, `Packet`처럼 구체적으로 표현합니다.
+새 타입 이름에 `Data`, `Info`, `Manager`, `Helper`, `Util`, `CommonModel`, `BaseDto`를 사용하지 않습니다. `Models/Datas` 폴더명은 예외지만 그 안의 타입은 `...Model`을 사용합니다. 역할을 `Catalog`, `Repository`, `Handler`, `Factory`, `Validator`, `Packet`처럼 구체적으로 표현합니다.
