@@ -1,6 +1,6 @@
 # 목표 서버 소스 루트
 
-이 폴더는 JSON-RPC 2.0 기반 모노리스의 신규 구현 위치입니다. 현재는 문서 기준선과 폴더만 생성되어 있으며 `.csproj`와 코드는 [구현 계획](../../docs/engineering/IMPLEMENTATION_PLAN.md)의 Phase 0부터 추가합니다.
+이 폴더는 JSON-RPC 2.0 기반 모노리스의 신규 구현 위치입니다. Phase 0에서는 단일 Web 프로젝트와 운영 상태 확인용 `GET /health`만 구성하며, JSON-RPC와 업무 기능은 [구현 계획](../../docs/engineering/IMPLEMENTATION_PLAN.md)의 후속 Phase에서 추가합니다.
 
 ## 구조
 

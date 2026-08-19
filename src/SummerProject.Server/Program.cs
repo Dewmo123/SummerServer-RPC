@@ -1,6 +1,13 @@
+using SummerProject.Server.Bootstrap;
+
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddServerServices();
+
 var app = builder.Build();
 
-app.MapGet("/", () => "Hello World!");
+app.MapServerEndpoints();
 
 app.Run();
+
+public partial class Program;

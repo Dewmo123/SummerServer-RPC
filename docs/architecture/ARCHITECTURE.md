@@ -250,3 +250,18 @@ params, 토큰, Authorization 헤더, SQL 매개변수 원문은 기록하지 �
 - 배치 전체 공유 트랜잭션
 - 시작 시 검증하지 않은 카탈로그 파일의 지연 파싱
 - 오류 응답에 예외 메시지, SQL, 스택 추적 노출
+
+## 12. 패키지 기준선
+
+패키지 버전은 루트 `Directory.Packages.props`에서 중앙 관리하고 각 프로젝트의 `packages.lock.json`으로 전이 의존성까지 고정합니다. 버전을 변경할 때는 중앙 버전과 모든 잠금 파일의 차이를 함께 검토합니다.
+
+| 패키지 | 버전 | 선택 근거와 영향 |
+|---|---:|---|
+| Dapper | 2.1.79 | ADR-0003의 명시적 SQL·트랜잭션 원칙을 구현하기 위한 데이터 접근 패키지입니다. Phase 3 전까지 런타임 코드는 사용하지 않습니다. |
+| Microsoft.Data.Sqlite | 10.0.11 | `net10.0`과 같은 제품군의 SQLite 공급자입니다. Phase 3에서 연결 Factory와 마이그레이션 기반으로 사용합니다. |
+| ZLogger | 2.5.10 | NFR-OBSERVABILITY-001의 구조화 로그 구현 대상입니다. 실제 로그 구성은 Phase 2에서 추가합니다. |
+| Microsoft.AspNetCore.Mvc.Testing | 10.0.11 | `net10.0` 서버와 같은 제품군의 TestServer 기반 통합 테스트를 제공합니다. |
+| Microsoft.NET.Test.Sdk | 18.8.1 | xUnit 테스트 검색과 실행에 사용합니다. TestHost의 `net8.0` 자산에서 Newtonsoft.Json 전이 의존성을 제거한 버전으로 올렸으며, 잠금 파일 갱신 후 테스트 검색과 실행을 다시 검증해야 합니다. |
+| xunit | 2.9.3 | 테스트 프레임워크 기준선입니다. |
+| xunit.runner.visualstudio | 3.1.4 | `dotnet test`와 IDE의 xUnit 검색을 연결하며 프로덕션 산출물에는 포함하지 않습니다. |
+| coverlet.collector | 6.0.4 | 추후 품질 게이트에서 커버리지 수집에 사용하며 프로덕션 산출물에는 포함하지 않습니다. |

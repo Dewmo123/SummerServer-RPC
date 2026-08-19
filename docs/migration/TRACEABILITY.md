@@ -28,7 +28,7 @@
 | FR-STAGE-003 | `stage.complete` | `CompleteStageHandler` | 소유권, 시간, 중복, 보상 롤백 | 구현 전 |
 | FR-ROOM-001 | `room.upsertMine` | `UpsertMyRoomHandler` | 종류, 좌표, 중복, 회전, 크기, upsert | 구현 전 |
 | FR-ROOM-002 | `room.getMine` | `GetMyRoomHandler` | 정상, 방 없음, 카탈로그 불일치 | 구현 전 |
-| FR-SYSTEM-001 | `GET /health` | `DatabaseHealthCheck` | 정상, DB 불가, 정보 비노출 | 구현 전 |
+| FR-SYSTEM-001 | `GET /health` | ASP.NET Core Health Checks, `DatabaseHealthCheck`(Phase 3) | [프로세스 정상·다른 경로 비노출](../../tests/SummerProject.Server.Tests/HealthEndpointTests.cs), DB 불가·정보 비노출 | 진행 중 |
 
 ## 비기능 추적표
 
@@ -42,9 +42,9 @@
 | NFR-RELIABILITY-002 | Migration Runner | 반복 적용·체크섬 테스트 | 구현 전 |
 | NFR-OBSERVABILITY-001 | ZLogger middleware/dispatcher | 구조화 필드 수집 테스트 | 구현 전 |
 | NFR-OBSERVABILITY-002 | Logging filter | 토큰·params 미포함 테스트 | 구현 전 |
-| NFR-MAINTAINABILITY-001 | solution/csproj | 프로덕션 프로젝트 수 검증 | 구현 전 |
+| NFR-MAINTAINABILITY-001 | solution/csproj, [CI](../../.github/workflows/ci.yml) | 프로덕션 프로젝트 수와 금지 패키지 검증 | 완료 |
 | NFR-MAINTAINABILITY-002 | 전체 코드 | analyzer, 리뷰 체크리스트 | 구현 전 |
-| NFR-TEST-001 | test project/CI | Release test 실행 | 구현 전 |
+| NFR-TEST-001 | test project/[CI](../../.github/workflows/ci.yml) | Release test 실행 | 진행 중 |
 | NFR-PERFORMANCE-001 | HTTP/RPC options | 요청·배치 제한 경계 테스트 | 구현 전 |
 | NFR-COMPAT-001 | TimeProvider/serializer | UTC 저장·ISO 응답 테스트 | 구현 전 |
 
