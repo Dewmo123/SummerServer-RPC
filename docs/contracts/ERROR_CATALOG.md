@@ -19,10 +19,10 @@
 
 | 코드 | key | message | 조건 |
 |---:|---|---|---|
-| -32700 | `RPC_PARSE_ERROR` | `Parse error` | JSON 자체를 파싱할 수 없음 |
-| -32600 | `RPC_INVALID_REQUEST` | `Invalid Request` | JSON-RPC Request Object가 아님 |
+| -32700 | `RPC_PARSE_ERROR` | `Parse error` | JSON 자체를 파싱할 수 없거나 최대 깊이를 초과함 |
+| -32600 | `RPC_INVALID_REQUEST` | `Invalid Request` | JSON-RPC Request Object가 아니거나 빈·제한 초과 배치임 |
 | -32601 | `RPC_METHOD_NOT_FOUND` | `Method not found` | 메서드가 등록되지 않음 |
-| -32602 | `RPC_INVALID_PARAMS` | `Invalid params` | params 구조, 타입, 필수값, 범위 오류 |
+| -32602 | `RPC_INVALID_PARAMS` | `Invalid params` | params가 Object/Array가 아니거나 구조, 타입, 필수값, 범위가 잘못됨 |
 | -32603 | `RPC_INTERNAL_ERROR` | `Internal error` | 처리되지 않은 내부 오류 |
 
 ## 3. 서버 공통 오류

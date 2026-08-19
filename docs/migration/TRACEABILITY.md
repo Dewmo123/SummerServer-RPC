@@ -7,7 +7,7 @@
 - `진행 중`: 코드 또는 테스트 일부가 있음
 - `완료`: 구현, 자동 테스트, 문서 검증이 모두 끝남
 
-현재 목표 구현 코드는 생성 전이므로 모든 항목은 구현 전입니다.
+Phase 0 저장소 기반과 Phase 1 JSON-RPC 프로토콜 코어를 구현했습니다. 업무 기능과 영속성은 후속 Phase 전까지 구현 전 상태를 유지합니다.
 
 ## 기능 추적표
 
@@ -34,8 +34,8 @@
 
 | 요구사항 | 구현 위치 | 검증 | 상태 |
 |---|---|---|---|
-| NFR-PROTOCOL-001 | `Rpc` | 단일/알림/배치 적합성 테스트 | 구현 전 |
-| NFR-PROTOCOL-002 | `JsonRpcMethodRegistry`, params binder | 대소문자 불일치 테스트 | 구현 전 |
+| NFR-PROTOCOL-001 | `Rpc` | [요청·응답](../../tests/SummerProject.Server.Tests/Rpc/JsonRpcRequestTests.cs), [알림·배치](../../tests/SummerProject.Server.Tests/Rpc/JsonRpcNotificationAndBatchTests.cs), [HTTP 전송](../../tests/SummerProject.Server.Tests/Rpc/JsonRpcTransportTests.cs) | 완료 |
+| NFR-PROTOCOL-002 | `JsonRpcMethodRegistry`, params binder | [메서드·필드 대소문자 불일치](../../tests/SummerProject.Server.Tests/Rpc/JsonRpcRequestTests.cs) | 완료 |
 | NFR-SECURITY-001 | Security, Logging, Options | 비밀값 로그·설정 검사 | 구현 전 |
 | NFR-SECURITY-002 | 모든 Repository | SQL 매개변수 및 injection 테스트 | 구현 전 |
 | NFR-RELIABILITY-001 | RefreshToken, StageRun Repository | 동시성 통합 테스트 | 구현 전 |
@@ -45,7 +45,7 @@
 | NFR-MAINTAINABILITY-001 | solution/csproj, [CI](../../.github/workflows/ci.yml) | 프로덕션 프로젝트 수와 금지 패키지 검증 | 완료 |
 | NFR-MAINTAINABILITY-002 | 전체 코드 | analyzer, 리뷰 체크리스트 | 구현 전 |
 | NFR-TEST-001 | test project/[CI](../../.github/workflows/ci.yml) | Release test 실행 | 진행 중 |
-| NFR-PERFORMANCE-001 | HTTP/RPC options | 요청·배치 제한 경계 테스트 | 구현 전 |
+| NFR-PERFORMANCE-001 | HTTP/RPC options | [64 KiB·JSON 깊이](../../tests/SummerProject.Server.Tests/Rpc/JsonRpcTransportTests.cs), [배치 50개 제한](../../tests/SummerProject.Server.Tests/Rpc/JsonRpcNotificationAndBatchTests.cs) | 완료 |
 | NFR-COMPAT-001 | TimeProvider/serializer | UTC 저장·ISO 응답 테스트 | 구현 전 |
 
 ## 단계별 완료 갱신 규칙

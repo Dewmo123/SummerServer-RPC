@@ -2,7 +2,7 @@ using SummerProject.Server.Bootstrap;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddServerServices();
+builder.Services.AddServerServices(builder.Configuration);
 
 var app = builder.Build();
 
