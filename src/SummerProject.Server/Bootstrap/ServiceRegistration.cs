@@ -1,3 +1,4 @@
+using SummerProject.Server.Infrastructure.Database;
 using SummerProject.Server.Infrastructure.Logging;
 using SummerProject.Server.Rpc.Dispatching;
 using SummerProject.Server.Rpc.Serialization;
@@ -11,8 +12,15 @@ internal static class ServiceRegistration
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        services.AddHealthChecks();
+        services
+            .AddHealthChecks()
+            .AddCheck<DatabaseHealthCheck>("sqlite");
         services.AddServerOptions(configuration);
+
+        services.AddSingleton(TimeProvider.System);
+        services.AddSingleton<SqliteConnectionFactory>();
+        services.AddSingleton<EmbeddedSqlMigrationSource>();
+        services.AddSingleton<SqliteMigrationRunner>();
 
         // 상태가 없는 프로토콜 구성 요소는 재사용하고 요청 조정 객체만 요청 범위로 분리한다.
         services.AddSingleton<JsonRpcSerializerOptions>();

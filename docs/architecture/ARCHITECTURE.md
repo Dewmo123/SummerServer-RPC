@@ -151,6 +151,8 @@ IRpcMethodHandler<TRequest, TResponse>
 
 업무 SQL은 각 기능의 `Persistence`에 두고 연결·마이그레이션 공통 기반만 Infrastructure에 둡니다.
 
+Phase 3 구현은 SQL 파일을 프로덕션 어셈블리에 포함하고 시작 시 버전 순서대로 적용합니다. 적용 이력의 이름과 SHA-256 체크섬이 현재 파일과 다르면 요청을 받기 전에 시작을 실패시킵니다.
+
 ### Infrastructure/Security
 
 - JWT 옵션, 발급, 검증
@@ -257,8 +259,8 @@ params, 토큰, Authorization 헤더, SQL 매개변수 원문은 기록하지 �
 
 | 패키지 | 버전 | 선택 근거와 영향 |
 |---|---:|---|
-| Dapper | 2.1.79 | ADR-0003의 명시적 SQL·트랜잭션 원칙을 구현하기 위한 데이터 접근 패키지입니다. Phase 3 전까지 런타임 코드는 사용하지 않습니다. |
-| Microsoft.Data.Sqlite | 10.0.11 | `net10.0`과 같은 제품군의 SQLite 공급자입니다. Phase 3에서 연결 Factory와 마이그레이션 기반으로 사용합니다. |
+| Dapper | 2.1.79 | ADR-0003의 명시적 SQL·트랜잭션 원칙에 따라 Phase 3 마이그레이션 이력과 상태 쿼리에 사용합니다. |
+| Microsoft.Data.Sqlite | 10.0.11 | `net10.0`과 같은 제품군의 SQLite 공급자로, Phase 3 연결 Factory와 실제 임시 DB 통합 테스트에 사용합니다. |
 | ZLogger | 2.5.10 | NFR-OBSERVABILITY-001에 따라 Phase 2에서 UTC JSON 콘솔 출력과 구조화 RPC 요약 로그를 구성했습니다. |
 | Microsoft.AspNetCore.Mvc.Testing | 10.0.11 | `net10.0` 서버와 같은 제품군의 TestServer 기반 통합 테스트를 제공합니다. |
 | Microsoft.NET.Test.Sdk | 18.8.1 | xUnit 테스트 검색과 실행에 사용합니다. TestHost의 `net8.0` 자산에서 Newtonsoft.Json 전이 의존성을 제거한 버전으로 올렸으며, 잠금 파일 갱신 후 테스트 검색과 실행을 다시 검증해야 합니다. |

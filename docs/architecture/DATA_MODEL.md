@@ -34,6 +34,8 @@ maps, stages, traps ── 정적 JSON 카탈로그
 
 서버 시작 시 적용된 버전의 체크섬이 파일과 다르면 시작을 실패시킵니다.
 
+`schema_migrations`는 Runner가 최초 마이그레이션 전에 생성합니다. SQL 파일은 운영체제별 체크아웃 줄바꿈 차이가 체크섬을 바꾸지 않도록 LF로 정규화한 뒤 SHA-256을 계산하고 같은 정규화본을 실행합니다.
+
 ## 4. users
 
 | 컬럼 | 타입 | 규칙 |
@@ -139,7 +141,7 @@ WHERE id = @CurrentTokenId
 
 별도 ID 없이 사용자 ID를 기본 키로 사용합니다. Upsert는 전체 맵과 함정 스냅샷을 교체합니다.
 
-가능한 SQLite 빌드에서는 `json_valid(traps_json)` 체크 제약을 사용합니다. 애플리케이션 검증은 DB 체크를 대체하지 않고 함께 유지합니다.
+현재 `Microsoft.Data.Sqlite` SQLite 빌드에서는 `json_valid(traps_json)`과 `json_type(traps_json) = 'array'` 체크 제약을 사용합니다. 애플리케이션 검증은 DB 체크를 대체하지 않고 함께 유지합니다.
 
 ## 10. 연결 설정
 
@@ -172,12 +174,15 @@ Infrastructure/Database/Migrations/
 └─ ...
 ```
 
+SQL 파일은 빌드 시 프로덕션 어셈블리의 내장 리소스로 포함하므로 publish 환경의 별도 파일 경로에 의존하지 않습니다.
+
 - 운영 스키마는 시작 시 순서대로 적용합니다.
 - 한 파일은 하나의 트랜잭션으로 적용합니다.
 - 실패하면 해당 파일을 롤백하고 서버 시작을 실패시킵니다.
 - 운영 데이터 seed는 마이그레이션에 넣지 않습니다.
 - 개발 사용자 seed는 Development 환경 전용으로 분리합니다.
 - 기존 MySQL 마이그레이션을 기계적으로 변환하지 않고 이 문서의 최종 스키마를 기준으로 새 초기 마이그레이션을 작성합니다.
+- Phase 3의 `0001_initial.sql`은 users, refresh_tokens, characters, currencies, stage_runs, user_rooms와 관련 인덱스·제약을 생성합니다.
 
 ## 12. 데이터 보존과 삭제
 

@@ -39,6 +39,8 @@ dotnet publish src/SummerProject.Server `
 
 서버 시작 중 마이그레이션 또는 카탈로그 검증이 실패하면 트래픽을 받지 않아야 합니다.
 
+적용된 SQL 마이그레이션 파일은 수정하지 않습니다. 기존 버전의 이름 또는 체크섬이 달라지면 서버는 시작을 거부하므로 변경은 항상 다음 번호의 새 파일로 추가합니다.
+
 ## 4. 상태 확인
 
 ```powershell
@@ -53,6 +55,8 @@ Invoke-RestMethod -Method Get -Uri "https://localhost:5001/health"
 - 카탈로그 적재 완료 상태
 
 상태 응답에 DB 전체 경로, 환경 변수, 예외 스택을 노출하지 않습니다.
+
+Phase 3 health check는 `SELECT 1`과 적용된 모든 마이그레이션의 이름·체크섬 일치를 함께 검사합니다. 실패 응답은 상태만 공개하므로 상세 원인은 시작 로그와 `schema_migrations`를 별도로 점검합니다.
 
 ## 5. 대표 RPC 확인
 

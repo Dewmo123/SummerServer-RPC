@@ -38,6 +38,7 @@ public sealed class OptionsValidationTests
         Assert.Contains(
             application.Logs,
             log => log.ExceptionMessage?.Contains(expectedMessage, StringComparison.Ordinal) is true);
+        Assert.False(File.Exists(application.DatabasePath));
     }
 
     private sealed class InvalidOptionsApplicationFactory(string key, string value)

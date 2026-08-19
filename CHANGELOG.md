@@ -12,7 +12,13 @@
 ### 기반
 
 - .NET 10 서버·xUnit 테스트 프로젝트의 패키지 버전 중앙 관리와 잠금 복원을 구성했습니다.
-- `GET /health`만 제공하는 빈 서버와 Phase 0 제약을 검사하는 CI를 추가했습니다.
+- `GET /health` 상태 엔드포인트와 Phase 0 제약을 검사하는 CI를 추가했습니다.
+
+### SQLite 기반
+
+- 연결마다 외래 키와 busy timeout을 적용하고 시작 시 WAL 모드를 활성화했습니다.
+- 내장 SQL 마이그레이션 Runner, SHA-256 체크섬 검증과 `0001_initial.sql` 스키마를 추가했습니다.
+- SQLite 연결·마이그레이션 상태를 검사하는 health check와 실제 임시 DB 통합 테스트를 추가했습니다.
 
 ### 관측성과 설정
 
@@ -29,7 +35,7 @@
 
 ### 예정
 
-- SQLite 스키마와 Dapper 저장소 구현
+- 기능별 Dapper Repository 구현
 - 기능별 RPC 재구현
 - 단일 서버 배포 워크플로 전환
 

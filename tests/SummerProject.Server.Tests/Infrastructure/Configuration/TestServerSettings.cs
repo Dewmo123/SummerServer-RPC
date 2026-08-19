@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
 
+using SummerProject.Server.Tests.Infrastructure.Database;
+
 namespace SummerProject.Server.Tests.Infrastructure.Configuration;
 
 internal static class TestServerSettings
@@ -28,11 +30,40 @@ internal static class TestServerSettings
 
 public class ConfiguredServerApplicationFactory : WebApplicationFactory<Program>
 {
+    private readonly SqliteIntegrationTestFixture? _ownedDatabase;
+    private int _databaseDisposed;
+
+    public ConfiguredServerApplicationFactory()
+    {
+        _ownedDatabase = new SqliteIntegrationTestFixture();
+        DatabasePath = _ownedDatabase.DatabasePath;
+    }
+
+    public ConfiguredServerApplicationFactory(string databasePath)
+    {
+        DatabasePath = Path.GetFullPath(databasePath);
+    }
+
+    public string DatabasePath { get; }
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.ConfigureAppConfiguration((_, configuration) =>
         {
-            configuration.AddInMemoryCollection(TestServerSettings.Valid);
+            Dictionary<string, string?> settings = new(TestServerSettings.Valid)
+            {
+                ["Database:Path"] = DatabasePath
+            };
+            configuration.AddInMemoryCollection(settings);
         });
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        base.Dispose(disposing);
+        if (disposing && Interlocked.Exchange(ref _databaseDisposed, 1) == 0)
+        {
+            _ownedDatabase?.Dispose();
+        }
     }
 }
