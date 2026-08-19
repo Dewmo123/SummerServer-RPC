@@ -50,6 +50,7 @@ internal static class JsonRpcEndpoint
 
         if (response is null)
         {
+            // 알림 요청은 성공과 실패 모두 응답을 만들지 않는다.
             context.Response.StatusCode = StatusCodes.Status204NoContent;
             return;
         }
@@ -83,6 +84,7 @@ internal static class JsonRpcEndpoint
         int maximumBytes,
         CancellationToken cancellationToken)
     {
+        // Content-Length가 없는 청크 요청도 실제 읽은 바이트 수로 제한한다.
         byte[] readBuffer = ArrayPool<byte>.Shared.Rent(8_192);
 
         try

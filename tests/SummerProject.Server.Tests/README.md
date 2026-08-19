@@ -13,5 +13,7 @@
 | `Features/Stages` | 입장, 완료 선점, 보상 롤백 |
 | `Features/Rooms` | 맵·함정 검증과 Upsert |
 | `Infrastructure/Database` | 마이그레이션, 제약, SQLite 연결 |
+| `Infrastructure/Configuration` | Options 바인딩과 시작 검증 |
+| `Infrastructure/Logging` | ZLogger 등록, 구조화 필드, 민감정보 제외 |
 
 테스트 정책은 [TEST_STRATEGY.md](../../docs/engineering/TEST_STRATEGY.md)를 따릅니다. DB 통합 테스트는 실제 임시 SQLite 파일과 별도 연결을 사용합니다.

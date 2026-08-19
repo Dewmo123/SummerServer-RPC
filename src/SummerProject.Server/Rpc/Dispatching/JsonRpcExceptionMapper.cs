@@ -3,7 +3,7 @@ using SummerProject.Server.Rpc.Validation;
 
 namespace SummerProject.Server.Rpc.Dispatching;
 
-internal sealed class JsonRpcExceptionMapper(ILogger<JsonRpcExceptionMapper> logger)
+internal sealed class JsonRpcExceptionMapper
 {
     public JsonRpcErrorPacket Map(Exception exception, string traceId)
     {
@@ -12,9 +12,7 @@ internal sealed class JsonRpcExceptionMapper(ILogger<JsonRpcExceptionMapper> log
             return JsonRpcErrors.InvalidParams(traceId);
         }
 
-        logger.LogError(
-            "JSON-RPC 처리 중 예기치 않은 예외가 발생했습니다. ExceptionType: {ExceptionType}",
-            exception.GetType().FullName);
+        // 예상하지 못한 예외의 세부 정보는 클라이언트 계약에 노출하지 않는다.
         return JsonRpcErrors.InternalError(traceId);
     }
 }

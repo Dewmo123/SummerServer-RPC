@@ -1,5 +1,6 @@
 namespace SummerProject.Server.Rpc.Contracts;
 
+// 표준 오류 코드와 클라이언트 분기용 key를 한곳에서 고정한다.
 internal static class JsonRpcErrors
 {
     public static JsonRpcErrorPacket ParseError(string traceId) =>

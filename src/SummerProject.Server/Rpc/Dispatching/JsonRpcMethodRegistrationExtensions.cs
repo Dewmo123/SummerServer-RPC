@@ -21,6 +21,7 @@ public static class JsonRpcMethodRegistrationExtensions
     {
         ArgumentNullException.ThrowIfNull(services);
 
+        // rpc. 접두사는 JSON-RPC 시스템 확장을 위해 예약되어 애플리케이션 메서드에 사용할 수 없다.
         if (string.IsNullOrEmpty(methodName) || methodName.StartsWith("rpc.", StringComparison.Ordinal))
         {
             throw new ArgumentException("애플리케이션 JSON-RPC 메서드명이 유효하지 않습니다.", nameof(methodName));

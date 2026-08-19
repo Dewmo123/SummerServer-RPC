@@ -1,6 +1,6 @@
 # 목표 서버 소스 루트
 
-이 폴더는 JSON-RPC 2.0 기반 모노리스의 신규 구현 위치입니다. Phase 1에서 `POST /rpc` 프로토콜 코어까지 구성했으며, 실제 업무 메서드는 [구현 계획](../../docs/engineering/IMPLEMENTATION_PLAN.md)의 후속 Phase에서 등록합니다.
+이 폴더는 JSON-RPC 2.0 기반 모노리스의 신규 구현 위치입니다. Phase 2까지 `POST /rpc` 프로토콜 코어, ZLogger 구조화 로그와 시작 설정 검증을 구성했으며, 실제 업무 메서드는 [구현 계획](../../docs/engineering/IMPLEMENTATION_PLAN.md)의 후속 Phase에서 등록합니다.
 
 ## 구조
 

@@ -6,6 +6,7 @@ internal sealed class JsonRpcMethodRegistry
 
     public JsonRpcMethodRegistry(IEnumerable<IJsonRpcMethodDefinition> definitions)
     {
+        // JSON-RPC 메서드명은 계약상 대소문자를 구분하므로 Ordinal 비교를 사용한다.
         Dictionary<string, IJsonRpcMethodDefinition> methods = new(StringComparer.Ordinal);
 
         foreach (IJsonRpcMethodDefinition definition in definitions)

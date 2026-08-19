@@ -1,6 +1,6 @@
 using System.Net;
 
-using Microsoft.AspNetCore.Mvc.Testing;
+using SummerProject.Server.Tests.Infrastructure.Configuration;
 
 namespace SummerProject.Server.Tests;
 
@@ -9,7 +9,7 @@ public sealed class HealthEndpointTests
     [Fact]
     public async Task GetHealthReturnsOk()
     {
-        await using WebApplicationFactory<Program> application = new();
+        await using ConfiguredServerApplicationFactory application = new();
         using HttpClient client = application.CreateClient();
 
         using HttpResponseMessage response = await client.GetAsync("/health");
@@ -20,7 +20,7 @@ public sealed class HealthEndpointTests
     [Fact]
     public async Task GetRootReturnsNotFound()
     {
-        await using WebApplicationFactory<Program> application = new();
+        await using ConfiguredServerApplicationFactory application = new();
         using HttpClient client = application.CreateClient();
 
         using HttpResponseMessage response = await client.GetAsync("/");

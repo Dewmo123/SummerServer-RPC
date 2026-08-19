@@ -4,21 +4,24 @@ using System.Text;
 using System.Text.Json;
 
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 using SummerProject.Server.Rpc.Dispatching;
+using SummerProject.Server.Tests.Infrastructure.Configuration;
 
 namespace SummerProject.Server.Tests.Rpc;
 
-public sealed class JsonRpcTestApplicationFactory : WebApplicationFactory<Program>
+public sealed class JsonRpcTestApplicationFactory : ConfiguredServerApplicationFactory
 {
+    // 실제 콘솔 대신 메모리 공급자를 사용해 구조화 필드까지 회귀 검증한다.
     internal ConcurrentQueue<JsonRpcTestLogEntry> Logs { get; } = new();
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
+        base.ConfigureWebHost(builder);
+
         builder.ConfigureLogging(logging =>
         {
             logging.ClearProviders();
@@ -145,7 +148,12 @@ public sealed class FailureHandler : IRpcMethodHandler<EmptyRequest, CompletedRe
         throw new InvalidOperationException("외부 응답에 노출되면 안 되는 내부 오류입니다.");
 }
 
-internal sealed record JsonRpcTestLogEntry(LogLevel Level, string Category, string Message);
+internal sealed record JsonRpcTestLogEntry(
+    LogLevel Level,
+    string Category,
+    string Message,
+    string? ExceptionMessage,
+    IReadOnlyDictionary<string, object?> Properties);
 
 internal sealed class JsonRpcTestLoggerProvider(ConcurrentQueue<JsonRpcTestLogEntry> logs) : ILoggerProvider
 {
@@ -172,6 +180,24 @@ internal sealed class JsonRpcTestLogger(
         Exception? exception,
         Func<TState, Exception?, string> formatter)
     {
-        logs.Enqueue(new JsonRpcTestLogEntry(logLevel, category, formatter(state, exception)));
+        Dictionary<string, object?> properties = new(StringComparer.Ordinal);
+        if (state is IEnumerable<KeyValuePair<string, object?>> values)
+        {
+            // 렌더링된 문장뿐 아니라 구조화 속성 이름과 타입도 테스트에서 확인한다.
+            foreach (KeyValuePair<string, object?> value in values)
+            {
+                if (value.Key != "{OriginalFormat}")
+                {
+                    properties[value.Key] = value.Value;
+                }
+            }
+        }
+
+        logs.Enqueue(new JsonRpcTestLogEntry(
+            logLevel,
+            category,
+            formatter(state, exception),
+            exception?.Message,
+            properties));
     }
 }

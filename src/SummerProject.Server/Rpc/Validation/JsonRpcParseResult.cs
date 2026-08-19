@@ -25,6 +25,7 @@ internal sealed class JsonRpcWorkItem
 
     public JsonRpcResponseEnvelope? ErrorResponse { get; }
 
+    // 알림에서 발생한 검증 오류는 기록하되 응답 목록에는 포함하지 않는다.
     public bool SuppressResponse { get; }
 
     public string? Method { get; }

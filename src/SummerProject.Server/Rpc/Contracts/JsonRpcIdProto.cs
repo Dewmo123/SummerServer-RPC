@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 
 namespace SummerProject.Server.Rpc.Contracts;
@@ -45,5 +47,31 @@ public readonly struct JsonRpcIdProto
         }
 
         _value.WriteTo(writer);
+    }
+
+    internal string ToSafeLogValue()
+    {
+        if (!IsPresent)
+        {
+            return "missing";
+        }
+
+        if (_value.ValueKind is JsonValueKind.Null)
+        {
+            return "null";
+        }
+
+        if (_value.ValueKind is JsonValueKind.Number)
+        {
+            const int maximumNumberLength = 64;
+            string rawNumber = _value.GetRawText();
+            return rawNumber.Length <= maximumNumberLength
+                ? rawNumber
+                : rawNumber[..maximumNumberLength];
+        }
+
+        // 문자열 ID는 민감한 클라이언트 값을 포함할 수 있으므로 원문 대신 안정적인 축약 해시만 기록한다.
+        byte[] hash = SHA256.HashData(Encoding.UTF8.GetBytes(_value.GetString()!));
+        return $"string:{Convert.ToHexString(hash.AsSpan(0, 8)).ToLowerInvariant()}";
     }
 }

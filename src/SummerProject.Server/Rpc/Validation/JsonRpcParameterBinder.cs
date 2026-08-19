@@ -34,6 +34,7 @@ internal sealed class JsonRpcParameterBinder(JsonRpcSerializerOptions serializer
 
     private TRequest BindArray<TRequest>(JsonElement parameters, IReadOnlyList<string> parameterNames)
     {
+        // 위치 기반 params는 등록 시 선언된 이름 순서와 개수가 정확히 일치해야 한다.
         if (parameters.GetArrayLength() != parameterNames.Count)
         {
             throw new JsonRpcInvalidParamsException();

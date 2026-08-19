@@ -1,3 +1,6 @@
+using System.Diagnostics;
+
+using SummerProject.Server.Infrastructure.Logging;
 using SummerProject.Server.Rpc.Serialization;
 using SummerProject.Server.Rpc.Validation;
 
@@ -7,6 +10,7 @@ internal sealed class JsonRpcRequestProcessor(
     JsonRpcRequestParser parser,
     JsonRpcDispatcher dispatcher,
     JsonRpcResponseWriter responseWriter,
+    JsonRpcLogWriter logWriter,
     ILogger<JsonRpcRequestProcessor> logger)
 {
     public async ValueTask<byte[]?> ProcessAsync(
@@ -15,6 +19,7 @@ internal sealed class JsonRpcRequestProcessor(
         string traceId,
         CancellationToken cancellationToken)
     {
+        long startedAt = Stopwatch.GetTimestamp();
         JsonRpcParseResult parseResult = parser.Parse(json, traceId);
         List<JsonRpcResponseEnvelope> responses = [];
 
@@ -22,14 +27,17 @@ internal sealed class JsonRpcRequestProcessor(
         {
             if (item.ErrorResponse is not null)
             {
-                if (item.SuppressResponse)
-                {
-                    logger.LogWarning(
-                        "JSON-RPC 알림 검증에 실패했습니다. RpcMethod: {RpcMethod}, ErrorCode: {ErrorCode}",
-                        item.Method,
-                        item.ErrorResponse.Error!.Code);
-                }
-                else
+                // 잘못된 알림은 응답하지 않지만 운영 추적을 위해 실패 요약은 남긴다.
+                logWriter.Write(
+                    logger,
+                    traceId,
+                    item.ErrorResponse.Id,
+                    item.Method,
+                    Stopwatch.GetElapsedTime(startedAt).TotalMilliseconds,
+                    item.SuppressResponse ? "notification" : "error",
+                    item.ErrorResponse.Error!.Code);
+
+                if (!item.SuppressResponse)
                 {
                     responses.Add(item.ErrorResponse);
                 }

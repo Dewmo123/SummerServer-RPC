@@ -25,6 +25,7 @@ public sealed class JsonRpcNotificationAndBatchTests(JsonRpcTestApplicationFacto
     [Fact]
     public async Task ExplicitNullIdIsNotANotification()
     {
+        // id 속성이 존재하면 값이 null이어도 반드시 응답해야 한다.
         using HttpClient client = factory.CreateClient();
         JsonRpcHttpResponse response = await JsonRpcTestClient.PostAsync(
             client,
@@ -60,6 +61,7 @@ public sealed class JsonRpcNotificationAndBatchTests(JsonRpcTestApplicationFacto
             application.Logs,
             log => log.Message.Contains("ErrorCode: -32602", StringComparison.Ordinal));
         Assert.Equal(LogLevel.Warning, entry.Level);
+        Assert.Equal("notification", entry.Properties["outcome"]);
         Assert.DoesNotContain("must-not-log", entry.Message, StringComparison.Ordinal);
     }
 

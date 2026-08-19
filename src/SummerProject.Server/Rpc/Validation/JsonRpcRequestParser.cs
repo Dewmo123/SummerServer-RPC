@@ -13,6 +13,7 @@ internal sealed class JsonRpcRequestParser(IOptions<JsonRpcOptions> options)
     {
         try
         {
+            // 느슨한 JSON 확장을 허용하지 않아 모든 클라이언트에 동일한 계약을 적용한다.
             using JsonDocument document = JsonDocument.Parse(
                 json,
                 new JsonDocumentOptions
@@ -45,6 +46,7 @@ internal sealed class JsonRpcRequestParser(IOptions<JsonRpcOptions> options)
         int count = root.GetArrayLength();
         if (count == 0 || count > options.Value.MaxBatchSize)
         {
+            // 빈 배치와 크기 초과 배치는 요소별 결과가 아닌 단일 Invalid Request로 처리한다.
             return SingleError(JsonRpcErrors.InvalidRequest(traceId));
         }
 
@@ -86,6 +88,7 @@ internal sealed class JsonRpcRequestParser(IOptions<JsonRpcOptions> options)
         JsonRpcIdProto id = JsonRpcIdProto.Missing;
         if (element.TryGetProperty("id", out JsonElement idElement))
         {
+            // 명시적인 null ID는 알림이 아니므로 속성 생략 상태와 별도로 보존한다.
             if (idElement.ValueKind is not (JsonValueKind.String or JsonValueKind.Number or JsonValueKind.Null))
             {
                 return InvalidRequest(traceId);

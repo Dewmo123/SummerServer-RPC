@@ -7,7 +7,7 @@
 - `진행 중`: 코드 또는 테스트 일부가 있음
 - `완료`: 구현, 자동 테스트, 문서 검증이 모두 끝남
 
-Phase 0 저장소 기반과 Phase 1 JSON-RPC 프로토콜 코어를 구현했습니다. 업무 기능과 영속성은 후속 Phase 전까지 구현 전 상태를 유지합니다.
+Phase 0 저장소 기반, Phase 1 JSON-RPC 프로토콜 코어, Phase 2 관측성과 설정을 구현했습니다. 업무 기능과 영속성은 후속 Phase 전까지 구현 전 상태를 유지합니다.
 
 ## 기능 추적표
 
@@ -36,15 +36,15 @@ Phase 0 저장소 기반과 Phase 1 JSON-RPC 프로토콜 코어를 구현했습
 |---|---|---|---|
 | NFR-PROTOCOL-001 | `Rpc` | [요청·응답](../../tests/SummerProject.Server.Tests/Rpc/JsonRpcRequestTests.cs), [알림·배치](../../tests/SummerProject.Server.Tests/Rpc/JsonRpcNotificationAndBatchTests.cs), [HTTP 전송](../../tests/SummerProject.Server.Tests/Rpc/JsonRpcTransportTests.cs) | 완료 |
 | NFR-PROTOCOL-002 | `JsonRpcMethodRegistry`, params binder | [메서드·필드 대소문자 불일치](../../tests/SummerProject.Server.Tests/Rpc/JsonRpcRequestTests.cs) | 완료 |
-| NFR-SECURITY-001 | Security, Logging, Options | 비밀값 로그·설정 검사 | 구현 전 |
+| NFR-SECURITY-001 | Security, Logging, Options | [민감 필드 차단·요청 로그 비노출](../../tests/SummerProject.Server.Tests/Infrastructure/Logging/SensitiveLogFilterTests.cs), [RPC 로그 비노출](../../tests/SummerProject.Server.Tests/Infrastructure/Logging/StructuredLoggingTests.cs) | 진행 중 |
 | NFR-SECURITY-002 | 모든 Repository | SQL 매개변수 및 injection 테스트 | 구현 전 |
 | NFR-RELIABILITY-001 | RefreshToken, StageRun Repository | 동시성 통합 테스트 | 구현 전 |
 | NFR-RELIABILITY-002 | Migration Runner | 반복 적용·체크섬 테스트 | 구현 전 |
-| NFR-OBSERVABILITY-001 | ZLogger middleware/dispatcher | 구조화 필드 수집 테스트 | 구현 전 |
-| NFR-OBSERVABILITY-002 | Logging filter | 토큰·params 미포함 테스트 | 구현 전 |
+| NFR-OBSERVABILITY-001 | ZLogger console, RPC dispatcher/processor | [공급자·구조화 필드](../../tests/SummerProject.Server.Tests/Infrastructure/Logging/StructuredLoggingTests.cs) | 완료 |
+| NFR-OBSERVABILITY-002 | `SensitiveLogFilter` | [Authorization·토큰·params·본문 차단](../../tests/SummerProject.Server.Tests/Infrastructure/Logging/SensitiveLogFilterTests.cs), [요청 로그 비노출](../../tests/SummerProject.Server.Tests/Infrastructure/Logging/StructuredLoggingTests.cs) | 완료 |
 | NFR-MAINTAINABILITY-001 | solution/csproj, [CI](../../.github/workflows/ci.yml) | 프로덕션 프로젝트 수와 금지 패키지 검증 | 완료 |
 | NFR-MAINTAINABILITY-002 | 전체 코드 | analyzer, 리뷰 체크리스트 | 구현 전 |
-| NFR-TEST-001 | test project/[CI](../../.github/workflows/ci.yml) | Release test 실행 | 진행 중 |
+| NFR-TEST-001 | test project/[CI](../../.github/workflows/ci.yml) | Release test 실행, [시작 설정 검증](../../tests/SummerProject.Server.Tests/Infrastructure/Configuration/OptionsValidationTests.cs) | 진행 중 |
 | NFR-PERFORMANCE-001 | HTTP/RPC options | [64 KiB·JSON 깊이](../../tests/SummerProject.Server.Tests/Rpc/JsonRpcTransportTests.cs), [배치 50개 제한](../../tests/SummerProject.Server.Tests/Rpc/JsonRpcNotificationAndBatchTests.cs) | 완료 |
 | NFR-COMPAT-001 | TimeProvider/serializer | UTC 저장·ISO 응답 테스트 | 구현 전 |
 

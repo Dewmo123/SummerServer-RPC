@@ -58,6 +58,8 @@
 
 `Jwt:SigningKey`는 예시 파일에도 값을 넣지 않습니다.
 
+Phase 2 서버는 `Jwt:SigningKey`가 없거나 UTF-8 기준 32바이트보다 짧으면 한국어 검증 오류를 기록하고 시작을 실패시킵니다. 테스트는 운영 비밀이 아닌 실행 중 생성한 가짜 키를 별도 구성 공급자로 주입합니다.
+
 ## 3. 설정 키
 
 | 키 | 필수 | 기본값 | 규칙 |
@@ -126,6 +128,8 @@ Google Client ID 자체는 일반적으로 비밀이 아니지만 환경별 설�
 | Production | Information | JSON | 파일 회전 또는 표준 출력 수집 |
 
 `Microsoft.AspNetCore`의 기본 레벨은 Warning으로 두고 health check의 반복 성공 로그는 필요하면 별도 필터링합니다.
+
+현재 서버는 ZLogger JSON 콘솔 출력을 사용하며 타임스탬프는 UTC입니다. JSON-RPC 처리 요약에는 `traceId`, 안전하게 축약한 `rpcId`, `rpcMethod`, `durationMs`, `outcome`, 실패 시 `errorCode`를 기록합니다. 인증 문맥이 구현된 뒤에는 호출자가 확인된 요청에만 `userId`를 추가합니다. Authorization 헤더, 토큰, 전체 params와 원문 요청 본문은 기록하지 않습니다.
 
 ## 8. 설정 변경 관리
 

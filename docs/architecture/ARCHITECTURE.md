@@ -259,7 +259,7 @@ params, 토큰, Authorization 헤더, SQL 매개변수 원문은 기록하지 �
 |---|---:|---|
 | Dapper | 2.1.79 | ADR-0003의 명시적 SQL·트랜잭션 원칙을 구현하기 위한 데이터 접근 패키지입니다. Phase 3 전까지 런타임 코드는 사용하지 않습니다. |
 | Microsoft.Data.Sqlite | 10.0.11 | `net10.0`과 같은 제품군의 SQLite 공급자입니다. Phase 3에서 연결 Factory와 마이그레이션 기반으로 사용합니다. |
-| ZLogger | 2.5.10 | NFR-OBSERVABILITY-001의 구조화 로그 구현 대상입니다. 실제 로그 구성은 Phase 2에서 추가합니다. |
+| ZLogger | 2.5.10 | NFR-OBSERVABILITY-001에 따라 Phase 2에서 UTC JSON 콘솔 출력과 구조화 RPC 요약 로그를 구성했습니다. |
 | Microsoft.AspNetCore.Mvc.Testing | 10.0.11 | `net10.0` 서버와 같은 제품군의 TestServer 기반 통합 테스트를 제공합니다. |
 | Microsoft.NET.Test.Sdk | 18.8.1 | xUnit 테스트 검색과 실행에 사용합니다. TestHost의 `net8.0` 자산에서 Newtonsoft.Json 전이 의존성을 제거한 버전으로 올렸으며, 잠금 파일 갱신 후 테스트 검색과 실행을 다시 검증해야 합니다. |
 | xunit | 2.9.3 | 테스트 프레임워크 기준선입니다. |

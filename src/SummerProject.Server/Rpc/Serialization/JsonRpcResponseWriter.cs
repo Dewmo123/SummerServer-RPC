@@ -42,6 +42,7 @@ internal sealed class JsonRpcResponseWriter
         writer.WriteStartObject();
         writer.WriteString("jsonrpc", "2.0");
 
+        // 성공 응답의 result와 실패 응답의 error는 동시에 직렬화하지 않는다.
         if (response.IsError)
         {
             WriteError(writer, response.Error!);

@@ -1,4 +1,4 @@
-using SummerProject.Server.Rpc.Contracts;
+using SummerProject.Server.Infrastructure.Logging;
 using SummerProject.Server.Rpc.Dispatching;
 using SummerProject.Server.Rpc.Serialization;
 using SummerProject.Server.Rpc.Validation;
@@ -12,21 +12,17 @@ internal static class ServiceRegistration
         IConfiguration configuration)
     {
         services.AddHealthChecks();
+        services.AddServerOptions(configuration);
 
-        services
-            .AddOptions<JsonRpcOptions>()
-            .Bind(configuration.GetSection(JsonRpcOptions.SectionName))
-            .Validate(options => options.MaxRequestBodyBytes > 0, "JSON-RPC 요청 본문 제한은 1 이상이어야 합니다.")
-            .Validate(options => options.MaxBatchSize > 0, "JSON-RPC 배치 제한은 1 이상이어야 합니다.")
-            .Validate(options => options.MaxJsonDepth > 0, "JSON 최대 깊이는 1 이상이어야 합니다.")
-            .ValidateOnStart();
-
+        // 상태가 없는 프로토콜 구성 요소는 재사용하고 요청 조정 객체만 요청 범위로 분리한다.
         services.AddSingleton<JsonRpcSerializerOptions>();
         services.AddSingleton<JsonRpcRequestParser>();
         services.AddSingleton<JsonRpcParameterBinder>();
         services.AddSingleton<JsonRpcMethodRegistry>();
         services.AddSingleton<JsonRpcResponseWriter>();
         services.AddSingleton<JsonRpcExceptionMapper>();
+        services.AddSingleton<SensitiveLogFilter>();
+        services.AddSingleton<JsonRpcLogWriter>();
         services.AddScoped<JsonRpcDispatcher>();
         services.AddScoped<JsonRpcRequestProcessor>();
 
