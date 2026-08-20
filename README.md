@@ -4,11 +4,11 @@
 
 > **현재 상태**
 >
-> **Phase 0~7까지 완료**했습니다.
+> 문서화된 구현 단계인 **Phase 0~8까지 완료**했습니다.
 >
-> JSON-RPC 처리, SQLite 마이그레이션, 구조화 로그, 정적 카탈로그, 인증, 캐릭터·재화와 스테이지 기능이 동작합니다.
+> JSON-RPC 기반부터 인증, 캐릭터, 재화, 스테이지, 사용자 방까지 모든 기능 요구사항을 구현했습니다.
 >
-> 사용자 방 RPC는 아직 구현 전입니다.
+> 현재 후속 과제는 진행 중인 비기능 요구사항 검증과 운영 전환 준비입니다.
 
 [빠른 실행](#빠른-실행) · [현재 진행 상황](#현재-진행-상황) · [코드 구조](#코드-구조) · [AI 활용 방식](#ai-활용-방식) · [문서 안내](#문서-안내)
 
@@ -23,8 +23,9 @@
 | 외부 진입점 | 게임 기능은 `POST /rpc`, 상태 확인은 `GET /health` |
 | 데이터베이스 | SQLite + Dapper |
 | 정적 데이터 | JSON 파일을 시작 시 검증한 뒤 메모리에 적재 |
-| 현재 완료 | 저장소 기반, JSON-RPC 코어, 설정·로그, SQLite, 정적 카탈로그, 인증, 캐릭터·재화, 스테이지 |
-| 다음 단계 | Phase 8 사용자 방 기능 |
+| 현재 완료 | Phase 0~8, 기능 요구사항 16개 전체 |
+| 다음 작업 | 비기능 요구사항 검증 보완, publish·smoke test·운영 전환 준비 |
+| 최근 검증 | 2026-08-20 Release 빌드 경고 0·오류 0, 테스트 211개 통과 |
 | 최신 상태 기준 | [요구사항 추적성 표](docs/migration/TRACEABILITY.md) |
 
 ### 지금 사용할 수 있는 기능
@@ -46,15 +47,19 @@
 - 캐릭터와 재화
   - 캐릭터 지연 생성과 현재 성장 상태 조회
   - 재화 단건·전체 지연 생성 조회와 코드 순 정렬
-  - 후속 스테이지 보상에서 사용할 원자적 경험치·재화 변경 서비스
+  - 스테이지 보상에서 사용하는 원자적 경험치·재화 변경 서비스
 - 스테이지
   - 인증 없는 정적 카탈로그 조회
   - 기존 진행 실행 포기와 새 실행 입장
   - 최소 시간·소유권 검증과 한 번만 지급되는 Gold·경험치 보상
+- 사용자 방
+  - 내 방의 맵과 함정 배치 저장·전체 교체·조회
+  - 맵 존재 여부, 함정 종류·좌표·중복·회전과 최대 100개 검증
+  - 동시 Upsert에서도 사용자당 방 한 개 유지
 
 > **중요:** 개발 로그인은 Development 환경에서 명시적으로 활성화한 경우에만 등록됩니다.
 >
-> `room.*` 호출은 아직 `Method not found`를 반환합니다.
+> 서버 시작에는 JWT 서명 키와 하나 이상의 Google OAuth Client ID 설정이 필요합니다.
 
 ---
 
@@ -160,7 +165,7 @@ SummerServer-RPC
 │  ├─ Infrastructure
 │  │  ├─ Database               SQLite 연결, 마이그레이션, health check
 │  │  ├─ Logging                ZLogger와 민감정보 필터
-│  │  └─ Security               인증 설정과 후속 보안 구현 위치
+│  │  └─ Security               JWT 발급·검증, Google 검증, 호출자 문맥
 │  ├─ GameData/Catalogs         맵·스테이지 JSON과 읽기 전용 Catalog
 │  ├─ Models
 │  │  ├─ DTOs                   RPC Request, Response, Packet
@@ -169,7 +174,7 @@ SummerServer-RPC
 │  ├─ Controllers               기능별 JSON-RPC Handler
 │  ├─ Services                  기능별 업무 규칙과 흐름
 │  ├─ Repositories              Dapper SQL과 트랜잭션
-│  ├─ Helpers                   기능별 Factory·Generator·Calculator
+│  ├─ Helpers                   역할이 명확한 생성·검증·변환 타입
 │  └─ Exceptions                기능별 업무 실패
 │
 ├─ tests/SummerProject.Server.Tests
@@ -185,7 +190,7 @@ SummerServer-RPC
 - **Controllers**는 DTO를 Service 호출로 연결합니다. 업무 규칙과 SQL을 넣지 않습니다.
 - **Services**는 인증·캐릭터·재화·스테이지·방의 업무 규칙과 흐름만 조정합니다.
 - **Repositories**는 매개변수화된 Dapper SQL과 명시적인 트랜잭션을 담당합니다.
-- **Helpers**는 기능별 Factory·Generator·Calculator처럼 경계가 분명한 보조 책임만 가집니다.
+- **Helpers**는 Factory·Generator·Calculator·Validator·Serializer처럼 이름과 경계가 분명한 보조 책임만 가집니다.
 - **Exceptions**는 클라이언트 계약으로 변환 가능한 업무 실패를 기능별로 구분합니다.
 - **Models/DTOs**는 외부 계약, **Models/Datas**는 SQLite 행을 표현합니다.
 - **GameData/Catalogs**는 배포된 정적 JSON을 검증하고 읽기 전용으로 제공합니다.
@@ -228,9 +233,9 @@ SQLite 초기 마이그레이션은 다음 테이블을 만듭니다.
 | 5 | Google·개발 로그인, JWT, 리프레시 토큰 | ✅ 완료 |
 | 6 | 캐릭터와 재화 | ✅ 완료 |
 | 7 | 스테이지 조회·입장·완료·보상 | ✅ 완료 |
-| 8 | 사용자 방 저장·조회 | ⏳ 예정 |
-| 9 | 통합, publish, 백업·복구, 배포 전환 | ⏳ 예정 |
-| 10 | 클라이언트 전환 후 레거시 제거 | 대기 |
+| 8 | 사용자 방 저장·조회 | ✅ 완료 |
+
+Phase 0~8의 기능 구현은 모두 완료되었습니다. 추적성 표에는 SQL injection 검증 확대, 일부 동시성·시간 호환성 검증, analyzer와 전체 품질 게이트 같은 비기능 항목이 아직 `진행 중` 또는 `구현 전`으로 남아 있습니다.
 
 요구사항별 최신 구현·테스트 위치는 [추적성 표](docs/migration/TRACEABILITY.md)에서 확인할 수 있습니다.
 
@@ -249,8 +254,8 @@ SQLite 초기 마이그레이션은 다음 테이블을 만듭니다.
 | 스테이지 | `stage.get` | 완료 |
 | 스테이지 | `stage.enter` | 완료 |
 | 스테이지 | `stage.complete` | 완료 |
-| 사용자 방 | `room.upsertMine` | 구현 전 |
-| 사용자 방 | `room.getMine` | 구현 전 |
+| 사용자 방 | `room.upsertMine` | 완료 |
+| 사용자 방 | `room.getMine` | 완료 |
 
 params, result, 인증, 오류는 [RPC 메서드 카탈로그](docs/contracts/RPC_METHOD_CATALOG.md)를 기준으로 합니다.
 
@@ -268,7 +273,7 @@ params, result, 인증, 오류는 [RPC 메서드 카탈로그](docs/contracts/RP
 
 ### 2. 복원하고 실행
 
-JWT 서명 키는 저장소에 없으므로 실행 세션에서 임시 개발 키를 만듭니다.
+JWT 서명 키와 실제 Google OAuth Client ID는 저장소에 없으므로 실행 환경에서 주입합니다. 아래 Client ID 자리표시자는 실제 개발용 값으로 교체해야 Google 로그인을 사용할 수 있습니다.
 
 ```powershell
 dotnet restore --locked-mode
@@ -277,6 +282,7 @@ $env:ASPNETCORE_ENVIRONMENT = "Development"
 $env:Jwt__SigningKey = [Convert]::ToBase64String(
     [Security.Cryptography.RandomNumberGenerator]::GetBytes(32)
 )
+$env:Google__ClientIds__0 = "replace-with-google-oauth-client-id"
 
 dotnet run --project src/SummerProject.Server
 ```
@@ -289,7 +295,22 @@ dotnet run --project src/SummerProject.Server
 Invoke-RestMethod -Method Get -Uri "http://localhost:<port>/health"
 ```
 
-현재는 업무 RPC가 등록되기 전이므로 `/health`가 대표 smoke test입니다.
+공개 RPC인 `stage.get`도 인증 없이 확인할 수 있습니다.
+
+```powershell
+$body = @{
+    jsonrpc = "2.0"
+    method = "stage.get"
+    params = @{ stageId = 1 }
+    id = "readme-smoke"
+} | ConvertTo-Json -Depth 10
+
+Invoke-RestMethod `
+    -Method Post `
+    -Uri "http://localhost:<port>/rpc" `
+    -ContentType "application/json" `
+    -Body $body
+```
 
 ### 전체 검증
 
@@ -300,7 +321,7 @@ dotnet test --configuration Release --no-build
 dotnet format --verify-no-changes --no-restore
 ```
 
-테스트는 JSON-RPC 적합성, 요청 제한, 시작 설정, 민감정보 로그 차단, 실제 SQLite 제약·마이그레이션, 정적 카탈로그 검증을 다룹니다.
+테스트는 JSON-RPC 적합성, 요청 제한, 시작 설정, 민감정보 로그 차단, 실제 SQLite 제약·마이그레이션, 정적 카탈로그, 인증·캐릭터·재화·스테이지·사용자 방과 동시성·롤백을 다룹니다.
 
 ---
 
@@ -335,7 +356,7 @@ FR-STAGE-003 스테이지 완료를 구현하라.
 - 먼저 AGENTS.md와 관련 요구사항, RPC 계약, 오류 카탈로그,
   DATA_MODEL.md, 관련 ADR을 읽어라.
 - 허용 범위는 Controllers/Stages, Services/Stages,
-  관련 Models와 테스트다.
+  Repositories/Stages, 관련 Helpers·Exceptions·Models와 테스트다.
 - 완료 선점과 Gold·경험치 지급을 같은 트랜잭션에서 처리하라.
 - 정상, 소유권 실패, 최소 시간 미충족, 동시 완료,
   보상 실패 롤백을 테스트하라.
@@ -424,7 +445,7 @@ AI는 미결정 요구사항 확정, 운영 데이터 이동·삭제, 공개 계
 
 #### 개발과 테스트
 
-- [IMPLEMENTATION_PLAN.md](docs/engineering/IMPLEMENTATION_PLAN.md): Phase 0~10 계획
+- [IMPLEMENTATION_PLAN.md](docs/engineering/IMPLEMENTATION_PLAN.md): Phase 0~8 구현 계획
 - [TEST_STRATEGY.md](docs/engineering/TEST_STRATEGY.md): 테스트 계층과 품질 게이트
 - [COMMENT_GUIDE.md](docs/engineering/COMMENT_GUIDE.md): 한국어 주석 규칙
 - [COMMIT_GUIDE.md](docs/engineering/COMMIT_GUIDE.md): 한국어 Conventional Commit 규칙
