@@ -7,7 +7,7 @@
 - `진행 중`: 코드 또는 테스트 일부가 있음
 - `완료`: 구현, 자동 테스트, 문서 검증이 모두 끝남
 
-Phase 0 저장소 기반부터 Phase 7 스테이지까지 구현했습니다. 후속 업무 Handler는 `Controllers`, 업무 Service는 `Services`, SQL 접근은 `Repositories`, 생성 보조 타입은 `Helpers`, 업무 예외는 `Exceptions`, 모델은 `Models`에 구현합니다.
+Phase 0 저장소 기반부터 Phase 8 사용자 방까지 구현했습니다. 후속 통합 작업도 Handler는 `Controllers`, 업무 Service는 `Services`, SQL 접근은 `Repositories`, 생성·검증 보조 타입은 `Helpers`, 업무 예외는 `Exceptions`, 모델은 `Models`에 구현합니다.
 
 ## 기능 추적표
 
@@ -26,8 +26,8 @@ Phase 0 저장소 기반부터 Phase 7 스테이지까지 구현했습니다. �
 | FR-STAGE-001 | `stage.get` | [GetStageHandler](../../src/SummerProject.Server/Controllers/Stages/GetStageHandler.cs), [StageCatalogQueryService](../../src/SummerProject.Server/Services/Stages/StageCatalogQueryService.cs), [StageCatalog](../../src/SummerProject.Server/GameData/Catalogs/Stages/StageCatalog.cs) | [공개 조회·없음](../../tests/SummerProject.Server.Tests/Stages/StageEndpointTests.cs), [카탈로그 적재·검증](../../tests/SummerProject.Server.Tests/GameData/Catalogs/CatalogLoaderTests.cs), [시작 검증](../../tests/SummerProject.Server.Tests/GameData/Catalogs/CatalogStartupTests.cs) | 완료 |
 | FR-STAGE-002 | `stage.enter` | [EnterStageHandler](../../src/SummerProject.Server/Controllers/Stages/EnterStageHandler.cs), [StageEntryService](../../src/SummerProject.Server/Services/Stages/StageEntryService.cs), [StageRunRepository](../../src/SummerProject.Server/Repositories/Stages/StageRunRepository.cs) | [기존 포기, 새 실행, 사용자·스테이지 없음, 동시 입장](../../tests/SummerProject.Server.Tests/Stages/StageEndpointTests.cs) | 완료 |
 | FR-STAGE-003 | `stage.complete` | [CompleteStageHandler](../../src/SummerProject.Server/Controllers/Stages/CompleteStageHandler.cs), [StageCompletionService](../../src/SummerProject.Server/Services/Stages/StageCompletionService.cs), [StageRunRepository](../../src/SummerProject.Server/Repositories/Stages/StageRunRepository.cs) | [소유권, 시간 경계, 중복·동시 완료, 스냅샷, 보상 롤백](../../tests/SummerProject.Server.Tests/Stages/StageCompletionTests.cs) | 완료 |
-| FR-ROOM-001 | `room.upsertMine` | `Controllers/Rooms/UpsertMyRoomHandler`, `Services/Rooms` | 종류, 좌표, 중복, 회전, 크기, upsert | 구현 전 |
-| FR-ROOM-002 | `room.getMine` | `Controllers/Rooms/GetMyRoomHandler`, `Services/Rooms` | 정상, 방 없음, 카탈로그 불일치 | 구현 전 |
+| FR-ROOM-001 | `room.upsertMine` | [UpsertMyRoomHandler](../../src/SummerProject.Server/Controllers/Rooms/UpsertMyRoomHandler.cs), [RoomLayoutService](../../src/SummerProject.Server/Services/Rooms/RoomLayoutService.cs), [RoomLayoutValidator](../../src/SummerProject.Server/Helpers/Rooms/RoomLayoutValidator.cs), [UserRoomRepository](../../src/SummerProject.Server/Repositories/Rooms/UserRoomRepository.cs) | [정상·전체 교체·사용자·맵·크기·64 KiB](../../tests/SummerProject.Server.Tests/Rooms/RoomEndpointTests.cs), [종류·좌표·중복·회전·100/101개](../../tests/SummerProject.Server.Tests/Rooms/RoomValidationTests.cs), [동시 Upsert](../../tests/SummerProject.Server.Tests/Rooms/RoomConcurrencyTests.cs) | 완료 |
+| FR-ROOM-002 | `room.getMine` | [GetMyRoomHandler](../../src/SummerProject.Server/Controllers/Rooms/GetMyRoomHandler.cs), [RoomLayoutService](../../src/SummerProject.Server/Services/Rooms/RoomLayoutService.cs), [RoomTrapSnapshotSerializer](../../src/SummerProject.Server/Helpers/Rooms/RoomTrapSnapshotSerializer.cs) | [정상·방 없음·카탈로그 불일치와 운영 로그·저장 스키마 손상](../../tests/SummerProject.Server.Tests/Rooms/RoomEndpointTests.cs) | 완료 |
 | FR-SYSTEM-001 | `GET /health` | ASP.NET Core Health Checks, `DatabaseHealthCheck` | [프로세스·SQLite 정상, DB 불가·정보 비노출](../../tests/SummerProject.Server.Tests/HealthEndpointTests.cs) | 완료 |
 
 ## 비기능 추적표
@@ -45,7 +45,7 @@ Phase 0 저장소 기반부터 Phase 7 스테이지까지 구현했습니다. �
 | NFR-MAINTAINABILITY-001 | `Controllers`, `Services`, `Repositories`, `Helpers`, `Exceptions`, `Models`, `GameData`, `Infrastructure`, `Rpc`, solution/csproj, [CI](../../.github/workflows/ci.yml) | 프로덕션 프로젝트 수와 금지 패키지 검증 | 완료 |
 | NFR-MAINTAINABILITY-002 | 전체 코드 | analyzer, 리뷰 체크리스트 | 구현 전 |
 | NFR-TEST-001 | test project/[CI](../../.github/workflows/ci.yml) | Release test 실행, [시작 설정 검증](../../tests/SummerProject.Server.Tests/Infrastructure/Configuration/OptionsValidationTests.cs), [실제 임시 SQLite 연결](../../tests/SummerProject.Server.Tests/Infrastructure/Database/SqliteConnectionPolicyTests.cs), [스키마 제약](../../tests/SummerProject.Server.Tests/Infrastructure/Database/DatabaseConstraintTests.cs), [정적 카탈로그](../../tests/SummerProject.Server.Tests/GameData/Catalogs/CatalogLoaderTests.cs) | 진행 중 |
-| NFR-PERFORMANCE-001 | HTTP/RPC options | [64 KiB·JSON 깊이](../../tests/SummerProject.Server.Tests/Rpc/JsonRpcTransportTests.cs), [배치 50개 제한](../../tests/SummerProject.Server.Tests/Rpc/JsonRpcNotificationAndBatchTests.cs) | 완료 |
+| NFR-PERFORMANCE-001 | HTTP/RPC options | [일반 요청 64 KiB·JSON 깊이](../../tests/SummerProject.Server.Tests/Rpc/JsonRpcTransportTests.cs), [방 저장 64 KiB 경계](../../tests/SummerProject.Server.Tests/Rooms/RoomEndpointTests.cs), [배치 50개 제한](../../tests/SummerProject.Server.Tests/Rpc/JsonRpcNotificationAndBatchTests.cs) | 완료 |
 | NFR-COMPAT-001 | TimeProvider/serializer | [인증 UTC 밀리초 저장·ISO 8601 만료 응답](../../tests/SummerProject.Server.Tests/Auth/AuthenticationEndpointTests.cs), 후속 기능 시간 호환성 | 진행 중 |
 
 ## 단계별 완료 갱신 규칙

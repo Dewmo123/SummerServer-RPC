@@ -1,5 +1,6 @@
 using SummerProject.Server.Exceptions.Characters;
 using SummerProject.Server.Exceptions.Currencies;
+using SummerProject.Server.Exceptions.Rooms;
 using SummerProject.Server.Exceptions.Stages;
 using SummerProject.Server.Exceptions.Users;
 using SummerProject.Server.Rpc.Contracts;
@@ -23,7 +24,15 @@ public sealed class GameplayErrorMappingTests
         { new StageRunForbiddenException(), 1403, "STAGE_RUN_FORBIDDEN" },
         { new StageRunAlreadyCompletedException(), 1404, "STAGE_RUN_ALREADY_COMPLETED" },
         { new StageClearTooEarlyException(), 1405, "STAGE_CLEAR_TOO_EARLY" },
-        { new StageRewardFailedException(), 1406, "STAGE_REWARD_FAILED" }
+        { new StageRewardFailedException(), 1406, "STAGE_REWARD_FAILED" },
+        { new MapNotFoundException(), 1501, "MAP_NOT_FOUND" },
+        { new RoomNotFoundException(), 1502, "ROOM_NOT_FOUND" },
+        { new RoomMapInvalidException(), 1503, "ROOM_MAP_INVALID" },
+        { new TrapTypeUnsupportedException(), 1504, "TRAP_TYPE_UNSUPPORTED" },
+        { new TrapOutOfBoundsException(), 1505, "TRAP_OUT_OF_BOUNDS" },
+        { new TrapPositionDuplicatedException(), 1506, "TRAP_POSITION_DUPLICATED" },
+        { new TrapRotationInvalidException(), 1507, "TRAP_ROTATION_INVALID" },
+        { new RoomInvalidParamsException(), -32602, "RPC_INVALID_PARAMS" }
     };
 
     [Theory]

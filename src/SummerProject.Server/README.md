@@ -1,6 +1,6 @@
 # 목표 서버 소스 루트
 
-이 폴더는 JSON-RPC 2.0 기반 모노리스의 신규 구현 위치입니다. Phase 7까지 `POST /rpc` 프로토콜 코어, ZLogger 구조화 로그, 시작 설정 검증, SQLite 마이그레이션, 정적 카탈로그, 인증, 캐릭터·재화와 스테이지 기능을 구성했습니다. 현재 인증·캐릭터·재화 RPC와 `stage.get`, `stage.enter`, `stage.complete`를 제공하며 개발 환경과 명시 옵션이 모두 허용할 때만 `auth.login.development`를 제공합니다.
+이 폴더는 JSON-RPC 2.0 기반 모노리스의 신규 구현 위치입니다. Phase 8까지 `POST /rpc` 프로토콜 코어, ZLogger 구조화 로그, 시작 설정 검증, SQLite 마이그레이션, 정적 카탈로그, 인증, 캐릭터·재화·스테이지와 사용자 방 기능을 구성했습니다. 현재 인증·캐릭터·재화·스테이지 RPC와 `room.upsertMine`, `room.getMine`을 제공하며 개발 환경과 명시 옵션이 모두 허용할 때만 `auth.login.development`를 제공합니다.
 
 실행 시 `Jwt:SigningKey`는 32바이트 이상으로, `Google:ClientIds`는 하나 이상의 허용된 OAuth Client ID로 외부 구성해야 합니다. 저장소의 `appsettings.json`에는 비밀값과 실제 Client ID를 넣지 않습니다.
 

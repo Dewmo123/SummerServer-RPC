@@ -4,12 +4,14 @@ using Microsoft.Extensions.Options;
 using SummerProject.Server.Controllers.Auth;
 using SummerProject.Server.Controllers.Characters;
 using SummerProject.Server.Controllers.Currencies;
+using SummerProject.Server.Controllers.Rooms;
 using SummerProject.Server.Controllers.Stages;
 using SummerProject.Server.GameData.Catalogs;
 using SummerProject.Server.GameData.Catalogs.Maps;
 using SummerProject.Server.GameData.Catalogs.Stages;
 using SummerProject.Server.Helpers.Auth;
 using SummerProject.Server.Helpers.Characters;
+using SummerProject.Server.Helpers.Rooms;
 using SummerProject.Server.Helpers.Stages;
 using SummerProject.Server.Infrastructure.Database;
 using SummerProject.Server.Infrastructure.Logging;
@@ -17,10 +19,12 @@ using SummerProject.Server.Infrastructure.Security;
 using SummerProject.Server.Models.DTOs.Auth;
 using SummerProject.Server.Models.DTOs.Characters;
 using SummerProject.Server.Models.DTOs.Currencies;
+using SummerProject.Server.Models.DTOs.Rooms;
 using SummerProject.Server.Models.DTOs.Stages;
 using SummerProject.Server.Repositories.Auth;
 using SummerProject.Server.Repositories.Characters;
 using SummerProject.Server.Repositories.Currencies;
+using SummerProject.Server.Repositories.Rooms;
 using SummerProject.Server.Repositories.Stages;
 using SummerProject.Server.Rpc.Dispatching;
 using SummerProject.Server.Rpc.Serialization;
@@ -28,6 +32,7 @@ using SummerProject.Server.Rpc.Validation;
 using SummerProject.Server.Services.Auth;
 using SummerProject.Server.Services.Characters;
 using SummerProject.Server.Services.Currencies;
+using SummerProject.Server.Services.Rooms;
 using SummerProject.Server.Services.Stages;
 
 namespace SummerProject.Server.Bootstrap;
@@ -101,6 +106,10 @@ internal static class ServiceRegistration
         services.AddScoped<StageCatalogQueryService>();
         services.AddScoped<StageEntryService>();
         services.AddScoped<StageCompletionService>();
+        services.AddSingleton<RoomLayoutValidator>();
+        services.AddSingleton<RoomTrapSnapshotSerializer>();
+        services.AddScoped<UserRoomRepository>();
+        services.AddScoped<RoomLayoutService>();
 
         services.AddJsonRpcMethod<GoogleLoginRequest, GoogleLoginResponse, GoogleLoginHandler>(
             "auth.login.google",
@@ -133,6 +142,14 @@ internal static class ServiceRegistration
             CompleteStageRequest,
             CompleteStageResponse,
             CompleteStageHandler>("stage.complete", "runId");
+        services.AddAuthenticatedJsonRpcMethod<
+            UpsertMyRoomRequest,
+            UpsertMyRoomResponse,
+            UpsertMyRoomHandler>("room.upsertMine", "mapId", "traps");
+        services.AddAuthenticatedJsonRpcMethod<
+            GetMyRoomRequest,
+            GetMyRoomResponse,
+            GetMyRoomHandler>("room.getMine");
 
         // 환경과 명시 옵션을 Registry 생성 시 함께 확인해 비활성 메서드는 조회 목록에서 제외한다.
         services.AddConditionalJsonRpcMethod<

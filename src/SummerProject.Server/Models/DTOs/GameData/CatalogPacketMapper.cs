@@ -16,6 +16,19 @@ internal static class CatalogPacketMapper
         new(map.MapId, map.Width, map.Height, map.Tiles);
 
     /// <summary>
+    /// 검증된 함정 값만 외부 위치·회전 Packet으로 변환합니다.
+    /// </summary>
+    public static TrapPacket ToPacket(this TrapProto trap) =>
+        new(
+            trap.Type,
+            new PositionPacket(trap.Position.X, trap.Position.Y, trap.Position.Z),
+            new RotationPacket(
+                trap.Rotation.X,
+                trap.Rotation.Y,
+                trap.Rotation.Z,
+                trap.Rotation.W));
+
+    /// <summary>
     /// 내부 불변 스테이지와 함정을 외부 응답 계약으로 변환합니다.
     /// </summary>
     public static StagePacket ToPacket(this StageProto stage) =>
@@ -24,14 +37,7 @@ internal static class CatalogPacketMapper
             stage.Width,
             stage.Height,
             stage.Tiles,
-            stage.Traps.Select(static trap => new TrapPacket(
-                trap.Type,
-                new PositionPacket(trap.Position.X, trap.Position.Y, trap.Position.Z),
-                new RotationPacket(
-                    trap.Rotation.X,
-                    trap.Rotation.Y,
-                    trap.Rotation.Z,
-                    trap.Rotation.W))).ToImmutableArray(),
+            stage.Traps.Select(static trap => trap.ToPacket()).ToImmutableArray(),
             stage.MinimumClearSeconds,
             stage.RewardExp,
             stage.RewardGold);

@@ -1,6 +1,7 @@
 using SummerProject.Server.Exceptions.Auth;
 using SummerProject.Server.Exceptions.Characters;
 using SummerProject.Server.Exceptions.Currencies;
+using SummerProject.Server.Exceptions.Rooms;
 using SummerProject.Server.Exceptions.Stages;
 using SummerProject.Server.Exceptions.Users;
 using SummerProject.Server.Rpc.Contracts;
@@ -12,7 +13,7 @@ internal sealed class JsonRpcExceptionMapper
 {
     public JsonRpcErrorPacket Map(Exception exception, string traceId)
     {
-        if (exception is JsonRpcInvalidParamsException)
+        if (exception is JsonRpcInvalidParamsException or RoomInvalidParamsException)
         {
             return JsonRpcErrors.InvalidParams(traceId);
         }
@@ -37,6 +38,13 @@ internal sealed class JsonRpcExceptionMapper
             StageRunAlreadyCompletedException => JsonRpcErrors.StageRunAlreadyCompleted(traceId),
             StageClearTooEarlyException => JsonRpcErrors.StageClearTooEarly(traceId),
             StageRewardFailedException => JsonRpcErrors.StageRewardFailed(traceId),
+            MapNotFoundException => JsonRpcErrors.MapNotFound(traceId),
+            RoomNotFoundException => JsonRpcErrors.RoomNotFound(traceId),
+            RoomMapInvalidException => JsonRpcErrors.RoomMapInvalid(traceId),
+            TrapTypeUnsupportedException => JsonRpcErrors.TrapTypeUnsupported(traceId),
+            TrapOutOfBoundsException => JsonRpcErrors.TrapOutOfBounds(traceId),
+            TrapPositionDuplicatedException => JsonRpcErrors.TrapPositionDuplicated(traceId),
+            TrapRotationInvalidException => JsonRpcErrors.TrapRotationInvalid(traceId),
             _ => JsonRpcErrors.InternalError(traceId)
         };
     }

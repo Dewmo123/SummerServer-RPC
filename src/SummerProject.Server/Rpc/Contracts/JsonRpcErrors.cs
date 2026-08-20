@@ -72,6 +72,27 @@ internal static class JsonRpcErrors
     public static JsonRpcErrorPacket StageRewardFailed(string traceId) =>
         Create(1406, "보상 지급에 실패했습니다.", "STAGE_REWARD_FAILED", traceId);
 
+    public static JsonRpcErrorPacket MapNotFound(string traceId) =>
+        Create(1501, "존재하지 않는 맵입니다.", "MAP_NOT_FOUND", traceId);
+
+    public static JsonRpcErrorPacket RoomNotFound(string traceId) =>
+        Create(1502, "저장된 방이 없습니다.", "ROOM_NOT_FOUND", traceId);
+
+    public static JsonRpcErrorPacket RoomMapInvalid(string traceId) =>
+        Create(1503, "저장된 방의 맵 정보가 유효하지 않습니다.", "ROOM_MAP_INVALID", traceId);
+
+    public static JsonRpcErrorPacket TrapTypeUnsupported(string traceId) =>
+        Create(1504, "지원하지 않는 함정 종류입니다.", "TRAP_TYPE_UNSUPPORTED", traceId);
+
+    public static JsonRpcErrorPacket TrapOutOfBounds(string traceId) =>
+        Create(1505, "함정 좌표가 맵 범위를 벗어났습니다.", "TRAP_OUT_OF_BOUNDS", traceId);
+
+    public static JsonRpcErrorPacket TrapPositionDuplicated(string traceId) =>
+        Create(1506, "같은 위치에 함정을 중복 배치할 수 없습니다.", "TRAP_POSITION_DUPLICATED", traceId);
+
+    public static JsonRpcErrorPacket TrapRotationInvalid(string traceId) =>
+        Create(1507, "함정 회전값이 정규화되어 있지 않습니다.", "TRAP_ROTATION_INVALID", traceId);
+
     private static JsonRpcErrorPacket Create(int code, string message, string key, string traceId) =>
         new(code, message, new JsonRpcErrorDataPacket(key, traceId));
 }
