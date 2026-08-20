@@ -1,519 +1,264 @@
 # SummerServer-RPC
 
-비동기 멀티플레이 게임 서버를 **.NET 10 + JSON-RPC 2.0 + SQLite** 기반의 단일 서버로 재구현하는 프로젝트입니다.
+기존 비동기 멀티플레이 게임 서버를 **.NET 10, ASP.NET Core, JSON-RPC 2.0, SQLite, Dapper** 기반의 모듈형 모노리스로 재구성한 프로젝트입니다.
 
-> **현재 상태**
->
-> 문서화된 구현 단계인 **Phase 0~8까지 완료**했습니다.
->
-> JSON-RPC 기반부터 인증, 캐릭터, 재화, 스테이지, 사용자 방까지 모든 기능 요구사항을 구현했습니다.
->
-> 현재 후속 과제는 진행 중인 비기능 요구사항 검증과 운영 전환 준비입니다.
-
-[빠른 실행](#빠른-실행) · [현재 진행 상황](#현재-진행-상황) · [코드 구조](#코드-구조) · [AI 활용 방식](#ai-활용-방식) · [문서 안내](#문서-안내)
+이 문서는 기능 사용법보다 저장소의 구조, 계층별 책임, 요청 처리 흐름과 AI를 사용한 개발 과정을 설명합니다.
 
 ---
 
-## 한눈에 보기
+## 목차
 
-| 항목 | 내용 |
-|---|---|
-| 목표 | 기존 REST 기반 분리 서버를 JSON-RPC 모듈형 모노리스로 재구현 |
-| 서버 프로젝트 | [`src/SummerProject.Server`](src/SummerProject.Server) 하나 |
-| 외부 진입점 | 게임 기능은 `POST /rpc`, 상태 확인은 `GET /health` |
-| 데이터베이스 | SQLite + Dapper |
-| 정적 데이터 | JSON 파일을 시작 시 검증한 뒤 메모리에 적재 |
-| 현재 완료 | Phase 0~8, 기능 요구사항 16개 전체 |
-| 다음 작업 | 비기능 요구사항 검증 보완, publish·smoke test·운영 전환 준비 |
-| 최근 검증 | 2026-08-20 Release 빌드 경고 0·오류 0, 테스트 211개 통과 |
-| 최신 상태 기준 | [요구사항 추적성 표](docs/migration/TRACEABILITY.md) |
-
-### 지금 사용할 수 있는 기능
-
-- `POST /rpc`
-  - JSON-RPC 단일 요청
-  - 알림과 배치 요청
-  - Object·Array params 바인딩
-  - 요청 ID 타입과 값 보존
-  - 표준 오류 응답
-  - 요청 크기·JSON 깊이·배치 크기 제한
-- `GET /health`
-  - SQLite 연결 확인
-  - `SELECT 1` 확인
-  - 적용된 마이그레이션 이름과 체크섬 확인
-- 인증
-  - Google·개발 로그인, JWT 검증
-  - 리프레시 토큰 회전·재사용 탐지·로그아웃
-- 캐릭터와 재화
-  - 캐릭터 지연 생성과 현재 성장 상태 조회
-  - 재화 단건·전체 지연 생성 조회와 코드 순 정렬
-  - 스테이지 보상에서 사용하는 원자적 경험치·재화 변경 서비스
-- 스테이지
-  - 인증 없는 정적 카탈로그 조회
-  - 기존 진행 실행 포기와 새 실행 입장
-  - 최소 시간·소유권 검증과 한 번만 지급되는 Gold·경험치 보상
-- 사용자 방
-  - 내 방의 맵과 함정 배치 저장·전체 교체·조회
-  - 맵 존재 여부, 함정 종류·좌표·중복·회전과 최대 100개 검증
-  - 동시 Upsert에서도 사용자당 방 한 개 유지
-
-> **중요:** 개발 로그인은 Development 환경에서 명시적으로 활성화한 경우에만 등록됩니다.
->
-> 서버 시작에는 JWT 서명 키와 하나 이상의 Google OAuth Client ID 설정이 필요합니다.
+1. [프로젝트 구성](#1-프로젝트-구성)
+2. [아키텍처](#2-아키텍처)
+3. [서버 소스 구조](#3-서버-소스-구조)
+4. [요청 처리와 의존 방향](#4-요청-처리와-의존-방향)
+5. [테스트와 문서 구조](#5-테스트와-문서-구조)
+6. [이름과 주석 규칙](#6-이름과-주석-규칙)
+7. [AI를 사용한 과정](#7-ai를-사용한-과정)
+8. [AI 작업 지시 문서](#8-ai-작업-지시-문서)
 
 ---
 
-## 프로젝트가 해결하려는 문제
+## 1. 프로젝트 구성
 
-기존 서버는 로그인 서버, 게임 서버, 공용 영속성 프로젝트로 나뉘어 있고 REST, MySQL, EF Core를 사용합니다. 새 서버는 기능을 단순히 옮기지 않고, 승인된 요구사항과 공개 계약을 기준으로 다시 구현합니다.
-
-핵심 목표는 다음과 같습니다.
-
-- 인증과 게임 기능을 하나의 프로세스와 배포 단위로 통합합니다.
-- 모든 게임 기능을 하나의 JSON-RPC 엔드포인트로 제공합니다.
-- SQL과 트랜잭션 경계를 코드에 명확하게 드러냅니다.
-- 중복 로그인, 토큰 재사용, 중복 보상, 잘못된 방 배치로 인한 데이터 훼손을 방지합니다.
-- 요구사항 → 계약 → 코드 → 테스트의 연결을 문서로 추적합니다.
-
-### 제품 범위
-
-구현 대상으로 확정된 기능:
-
-- Google 로그인과 개발 로그인
-- JWT 액세스 토큰
-- 리프레시 토큰 회전·재사용 탐지·로그아웃
-- 캐릭터 레벨과 경험치
-- Gold를 포함한 재화
-- 정적 스테이지 조회·입장·완료·보상
-- 개인 방의 맵과 함정 배치
-
-현재 범위 밖:
-
-- 매칭, 랭킹, 리더보드
-- 장비, 스킬, 인벤토리
-- 결제와 상점
-- 다른 플레이어 방의 실제 약탈 결과 처리
-- 강한 치트 방지와 서버 권위 시뮬레이션
-- 다중 서버 인스턴스가 같은 SQLite DB에 쓰는 구조
-
----
-
-## 기술 구성
-
-| 영역 | 기술 |
-|---|---|
-| Runtime | .NET SDK 10.0.400, ASP.NET Core |
-| RPC | JSON-RPC 2.0 over HTTP |
-| JSON | System.Text.Json |
-| DB | SQLite, Microsoft.Data.Sqlite 10.0.11 |
-| 데이터 접근 | Dapper 2.1.79 |
-| 로그 | ZLogger 2.5.10, Microsoft.Extensions.Logging |
-| 테스트 | xUnit, TestServer, 실제 임시 SQLite |
-| 패키지 관리 | 중앙 버전 관리 + packages.lock.json |
-
-신규 서버에는 **EF Core, MySQL, Newtonsoft.Json을 사용하지 않습니다.**
-
-### 요청 처리 흐름
-
-```text
-게임 클라이언트
-    │
-    ▼
-POST /rpc
-    │  Content-Type·본문 크기 확인
-    ▼
-JSON-RPC 파싱과 구조 검증
-    │  단일·알림·배치 / id / params
-    ▼
-Method Registry와 params 바인딩
-    ▼
-Controllers의 RPC Handler
-    ▼
-Services의 업무 규칙
-    ▼
-Repositories의 Dapper SQL과 트랜잭션
-    ▼
-SQLite / 정적 Catalog
-    │
-    ▼
-result 또는 error 응답 + 구조화 로그
-```
-
-### 반드시 지키는 JSON-RPC 규칙
-
-- `jsonrpc`는 정확히 `"2.0"`이어야 합니다.
-- `id` 속성이 없는 요청만 알림입니다.
-- `"id": null`은 알림이 아니므로 응답해야 합니다.
-- 요청 ID의 String·Number·Null 타입과 값을 응답에 보존합니다.
-- 메서드명과 이름 기반 params 필드명은 대소문자를 구분합니다.
-- 성공 응답은 `result`, 실패 응답은 `error`만 가집니다.
-- 알림은 실행하지만 성공·실패 모두 응답하지 않습니다.
-- 배치 요소는 서로 독립적이며 배치 전체 트랜잭션을 만들지 않습니다.
-
-전체 규칙은 [JSON-RPC 계약](docs/contracts/JSON_RPC_CONTRACT.md)을 따릅니다.
-
----
-
-## 코드 구조
+저장소는 프로덕션 서버, 테스트, 문서 기준선으로 구분됩니다.
 
 ```text
 SummerServer-RPC
-├─ src/SummerProject.Server
-│  ├─ Program.cs
-│  ├─ Bootstrap                 설정, DI, 시작 순서, 엔드포인트
-│  ├─ Rpc                       파싱, 검증, 디스패치, 직렬화
-│  ├─ Infrastructure
-│  │  ├─ Database               SQLite 연결, 마이그레이션, health check
-│  │  ├─ Logging                ZLogger와 민감정보 필터
-│  │  └─ Security               JWT 발급·검증, Google 검증, 호출자 문맥
-│  ├─ GameData/Catalogs         맵·스테이지 JSON과 읽기 전용 Catalog
-│  ├─ Models
-│  │  ├─ DTOs                   RPC Request, Response, Packet
-│  │  ├─ Datas                  Dapper DB 행 Model
-│  │  └─ GameData               검증된 정적 Proto
-│  ├─ Controllers               기능별 JSON-RPC Handler
-│  ├─ Services                  기능별 업무 규칙과 흐름
-│  ├─ Repositories              Dapper SQL과 트랜잭션
-│  ├─ Helpers                   역할이 명확한 생성·검증·변환 타입
-│  └─ Exceptions                기능별 업무 실패
-│
-├─ tests/SummerProject.Server.Tests
-├─ docs
-├─ AGENTS.md
-├─ CONTRIBUTING.md
-└─ CHANGELOG.md
+├─ src/SummerProject.Server           프로덕션 서버
+├─ tests/SummerProject.Server.Tests   자동화 테스트
+├─ docs                               요구사항·계약·설계 문서
+├─ AGENTS.md                          AI 작업 규칙
+├─ CONTRIBUTING.md                    작업 절차
+├─ Directory.Packages.props           패키지 버전 관리
+├─ global.json                        .NET SDK 고정
+└─ SummerProject.slnx                 solution 구성
 ```
 
-### 폴더를 나누는 기준
+프로덕션 프로젝트는 [`src/SummerProject.Server`](src/SummerProject.Server) 하나만 사용합니다. 인증, 게임 기능, 데이터 접근과 프로토콜이 같은 프로젝트에 있지만 폴더와 namespace로 책임을 분리합니다.
 
-- **Rpc**는 JSON-RPC 규격만 처리합니다. 게임 업무와 SQL을 알지 못합니다.
-- **Controllers**는 DTO를 Service 호출로 연결합니다. 업무 규칙과 SQL을 넣지 않습니다.
-- **Services**는 인증·캐릭터·재화·스테이지·방의 업무 규칙과 흐름만 조정합니다.
-- **Repositories**는 매개변수화된 Dapper SQL과 명시적인 트랜잭션을 담당합니다.
-- **Helpers**는 Factory·Generator·Calculator·Validator·Serializer처럼 이름과 경계가 분명한 보조 책임만 가집니다.
-- **Exceptions**는 클라이언트 계약으로 변환 가능한 업무 실패를 기능별로 구분합니다.
-- **Models/DTOs**는 외부 계약, **Models/Datas**는 SQLite 행을 표현합니다.
-- **GameData/Catalogs**는 배포된 정적 JSON을 검증하고 읽기 전용으로 제공합니다.
-- **Infrastructure**는 DB, 로깅, 보안처럼 외부 기술과 맞닿는 코드를 담당합니다.
-
-범용 `Manager`, `Helper`, `Util`, `Info`, `Data` 타입명과 새 `Features`, `Content` 폴더는 사용하지 않습니다.
-
-### 현재 데이터 기반
-
-SQLite 초기 마이그레이션은 다음 테이블을 만듭니다.
-
-- `users`: 외부 인증 계정과 연결된 사용자
-- `refresh_tokens`: 원문이 아닌 SHA-256 해시와 토큰 패밀리 상태
-- `characters`: 사용자별 레벨과 경험치
-- `currencies`: 사용자·재화 종류별 잔액
-- `stage_runs`: 스테이지 입장·완료·포기 기록
-- `user_rooms`: 사용자의 최신 맵과 함정 배치
-- `schema_migrations`: 적용된 SQL 이름과 체크섬
-
-연결마다 외래 키와 busy timeout을 활성화하고, 서버 시작 시 WAL 모드를 설정합니다. 자세한 제약과 인덱스는 [데이터 모델](docs/architecture/DATA_MODEL.md)에서 확인할 수 있습니다.
-
-### 현재 정적 데이터
-
-- [Map1.json](src/SummerProject.Server/GameData/Catalogs/Maps/Map1.json): ID 1, 16×8
-- [Stage1.json](src/SummerProject.Server/GameData/Catalogs/Stages/Stage1.json): ID 1, 최소 1초, 경험치 10, Gold 100, SawTrap 1개
-
-서버는 시작할 때 ID, 크기, 필수 배열, 함정 종류, 좌표, 중복 위치, quaternion, 보상을 검사합니다. 검증에 실패하면 요청을 받기 전에 시작을 중단합니다.
+테스트 프로젝트는 별도 배포물이 아니므로 [`tests/SummerProject.Server.Tests`](tests/SummerProject.Server.Tests)에 둡니다. [`docs`](docs)는 부가 설명이 아니라 요구사항과 외부 계약, 설계 결정, 구현 상태를 관리하는 기준선입니다.
 
 ---
 
-## 현재 진행 상황
-
-| Phase | 내용 | 상태 |
-|---:|---|:---:|
-| 0 | .NET 10, 단일 프로젝트, 중앙 패키지, CI | ✅ 완료 |
-| 1 | JSON-RPC 단일·알림·배치 처리 | ✅ 완료 |
-| 2 | 설정 검증, ZLogger, 민감정보 차단, health | ✅ 완료 |
-| 3 | SQLite 연결, WAL, SQL 마이그레이션, 체크섬 | ✅ 완료 |
-| 4 | 맵·스테이지 JSON Loader와 Catalog | ✅ 완료 |
-| 5 | Google·개발 로그인, JWT, 리프레시 토큰 | ✅ 완료 |
-| 6 | 캐릭터와 재화 | ✅ 완료 |
-| 7 | 스테이지 조회·입장·완료·보상 | ✅ 완료 |
-| 8 | 사용자 방 저장·조회 | ✅ 완료 |
-
-Phase 0~8의 기능 구현은 모두 완료되었습니다. 추적성 표에는 SQL injection 검증 확대, 일부 동시성·시간 호환성 검증, analyzer와 전체 품질 게이트 같은 비기능 항목이 아직 `진행 중` 또는 `구현 전`으로 남아 있습니다.
-
-요구사항별 최신 구현·테스트 위치는 [추적성 표](docs/migration/TRACEABILITY.md)에서 확인할 수 있습니다.
-
-<details>
-<summary><strong>계약이 확정된 RPC 목록 보기</strong></summary>
-
-| 영역 | RPC | 상태 |
-|---|---|---|
-| 인증 | `auth.login.google` | 완료 |
-| 인증 | `auth.login.development` | Development 조건부 완료 |
-| 인증 | `auth.token.refresh` | 완료 |
-| 인증 | `auth.logout` | 완료 |
-| 캐릭터 | `character.getMine` | 완료 |
-| 재화 | `currency.getMine` | 완료 |
-| 재화 | `currency.listMine` | 완료 |
-| 스테이지 | `stage.get` | 완료 |
-| 스테이지 | `stage.enter` | 완료 |
-| 스테이지 | `stage.complete` | 완료 |
-| 사용자 방 | `room.upsertMine` | 완료 |
-| 사용자 방 | `room.getMine` | 완료 |
-
-params, result, 인증, 오류는 [RPC 메서드 카탈로그](docs/contracts/RPC_METHOD_CATALOG.md)를 기준으로 합니다.
-
-</details>
-
----
-
-## 빠른 실행
-
-### 1. 준비
-
-- .NET SDK 10.0.400
-- PowerShell
-- 쓰기 가능한 로컬 데이터 디렉터리
-
-### 2. 복원하고 실행
-
-JWT 서명 키와 실제 Google OAuth Client ID는 저장소에 없으므로 실행 환경에서 주입합니다. 아래 Client ID 자리표시자는 실제 개발용 값으로 교체해야 Google 로그인을 사용할 수 있습니다.
-
-```powershell
-dotnet restore --locked-mode
-
-$env:ASPNETCORE_ENVIRONMENT = "Development"
-$env:Jwt__SigningKey = [Convert]::ToBase64String(
-    [Security.Cryptography.RandomNumberGenerator]::GetBytes(32)
-)
-$env:Google__ClientIds__0 = "replace-with-google-oauth-client-id"
-
-dotnet run --project src/SummerProject.Server
-```
-
-실행 주소는 [launchSettings.json](src/SummerProject.Server/Properties/launchSettings.json) 또는 콘솔 출력을 확인합니다.
-
-### 3. 상태 확인
-
-```powershell
-Invoke-RestMethod -Method Get -Uri "http://localhost:<port>/health"
-```
-
-공개 RPC인 `stage.get`도 인증 없이 확인할 수 있습니다.
-
-```powershell
-$body = @{
-    jsonrpc = "2.0"
-    method = "stage.get"
-    params = @{ stageId = 1 }
-    id = "readme-smoke"
-} | ConvertTo-Json -Depth 10
-
-Invoke-RestMethod `
-    -Method Post `
-    -Uri "http://localhost:<port>/rpc" `
-    -ContentType "application/json" `
-    -Body $body
-```
-
-### 전체 검증
-
-```powershell
-dotnet restore --locked-mode
-dotnet build --configuration Release --no-restore
-dotnet test --configuration Release --no-build
-dotnet format --verify-no-changes --no-restore
-```
-
-테스트는 JSON-RPC 적합성, 요청 제한, 시작 설정, 민감정보 로그 차단, 실제 SQLite 제약·마이그레이션, 정적 카탈로그, 인증·캐릭터·재화·스테이지·사용자 방과 동시성·롤백을 다룹니다.
-
----
-
-## AI 활용 방식
-
-이 프로젝트에서 AI는 **문서에 없는 결정을 내리는 주체가 아니라, 승인된 계약을 구현하고 검증하는 협업 도구**입니다.
-
-### 사람과 AI의 역할
-
-| 사람 | AI |
-|---|---|
-| 제품 범위와 미결정 사항 승인 | 관련 문서와 기존 동작 조사 |
-| 공개 계약과 설계 결정 승인 | 요구사항에 맞는 코드·테스트 작성 |
-| 운영 데이터 변경과 배포 승인 | 빌드·테스트·문서 정합성 검증 |
-| 최종 리뷰와 병합 | 스테이징 diff 기반 커밋 메시지 제안 |
-
-### AI 작업 순서
-
-1. [문서 지도](docs/README.md)에서 읽을 문서를 찾습니다.
-2. 작업할 FR/NFR ID와 RPC 메서드를 확인합니다.
-3. 관련 ADR, 데이터 규칙, 오류 계약을 읽습니다.
-4. 구현 범위와 정상·경계·실패·동시성 테스트를 먼저 정리합니다.
-5. 코드, 테스트, 추적성 문서를 함께 수정합니다.
-6. restore, build, test, format을 실행합니다.
-7. 스테이징된 diff만 보고 한국어 커밋 메시지를 제안합니다.
-
-### AI에게 전달하는 명령 예시
+## 2. 아키텍처
 
 ```text
-FR-STAGE-003 스테이지 완료를 구현하라.
-
-- 먼저 AGENTS.md와 관련 요구사항, RPC 계약, 오류 카탈로그,
-  DATA_MODEL.md, 관련 ADR을 읽어라.
-- 허용 범위는 Controllers/Stages, Services/Stages,
-  Repositories/Stages, 관련 Helpers·Exceptions·Models와 테스트다.
-- 완료 선점과 Gold·경험치 지급을 같은 트랜잭션에서 처리하라.
-- 정상, 소유권 실패, 최소 시간 미충족, 동시 완료,
-  보상 실패 롤백을 테스트하라.
-- 미결정 사항은 추측하지 말고 문서에 기록하라.
-- build와 test를 실행하고 TRACEABILITY.md를 갱신하라.
+게임 클라이언트
+      │ HTTP + JSON-RPC 2.0
+      ▼
+┌──────────────────────────────────────────────┐
+│ Rpc                                          │
+│  파싱 · 검증 · 메서드 탐색 · 직렬화         │
+│                    │                         │
+│                    ▼                         │
+│ Controllers ──► Services ──► Repositories    │
+│                    │              │          │
+│                    ▼              ▼          │
+│             Helpers/Models   Infrastructure  │
+│                                   │          │
+│                        SQLite / 외부 인증     │
+│                                              │
+│ GameData Catalog ──► 검증된 정적 데이터      │
+└──────────────────────────────────────────────┘
 ```
 
-작업 요청에는 가능한 한 다음 내용을 명시합니다.
+[`Rpc`](src/SummerProject.Server/Rpc)는 JSON-RPC 규격만 처리하고 게임 업무를 알지 못합니다. [`Controllers`](src/SummerProject.Server/Controllers)는 외부 요청을 Service로 연결하고, [`Services`](src/SummerProject.Server/Services)는 업무 흐름을 조정합니다. SQL은 [`Repositories`](src/SummerProject.Server/Repositories), SQLite·JWT·로깅 같은 외부 기술은 [`Infrastructure`](src/SummerProject.Server/Infrastructure)에만 둡니다.
 
-- 요구사항 ID와 RPC 이름
-- 수정해도 되는 폴더
-- 하지 말아야 할 범위
-- 반드시 필요한 테스트
-- 문서 갱신과 완료 조건
+프로젝트를 기능별 `.csproj`로 나누는 대신 각 계층 아래에서 같은 기능 구분을 사용합니다.
 
-AI는 미결정 요구사항 확정, 운영 데이터 이동·삭제, 공개 계약 변경, 패키지 추가, push·배포 권한을 자동으로 갖지 않습니다.
+```text
+Controllers/Auth          Services/Auth          Repositories/Auth
+Controllers/Characters    Services/Characters    Repositories/Characters
+Controllers/Currencies    Services/Currencies    Repositories/Currencies
+Controllers/Stages        Services/Stages        Repositories/Stages
+Controllers/Rooms         Services/Rooms         Repositories/Rooms
+```
+
+이 구조로 배포 단위는 하나로 유지하면서 기능 간 경계를 코드에서 확인할 수 있습니다.
 
 ---
 
-## 문서 안내
+## 3. 서버 소스 구조
 
-### 처음 읽는다면
-
-목적에 따라 아래 문서부터 보면 됩니다.
-
-| 알고 싶은 내용 | 먼저 읽을 문서 |
+| 위치 | 책임 |
 |---|---|
-| 제품이 무엇을 해야 하는가 | [앱 요구사항](docs/requirements/APP_REQUIREMENTS.md) |
-| 어떤 RPC가 있는가 | [RPC 메서드 카탈로그](docs/contracts/RPC_METHOD_CATALOG.md) |
-| JSON-RPC를 어떻게 처리하는가 | [JSON-RPC 계약](docs/contracts/JSON_RPC_CONTRACT.md) |
-| 코드가 왜 이 구조인가 | [목표 아키텍처](docs/architecture/ARCHITECTURE.md) |
-| DB가 어떻게 생겼는가 | [데이터 모델](docs/architecture/DATA_MODEL.md) |
-| 지금 어디까지 구현됐는가 | [요구사항 추적성](docs/migration/TRACEABILITY.md) |
-| 다음에는 무엇을 구현하는가 | [구현 계획](docs/engineering/IMPLEMENTATION_PLAN.md) |
-| 실행·백업·장애 대응 방법 | [운영 Runbook](docs/operations/RUNBOOK.md) |
-| AI에게 작업을 요청하는 방법 | [AI 작업 템플릿](docs/templates/AI_TASK_TEMPLATE.md) |
+| [`Program.cs`](src/SummerProject.Server/Program.cs) | 애플리케이션 생성과 시작 |
+| [`Bootstrap`](src/SummerProject.Server/Bootstrap) | 설정 검증, DI 등록, 초기화 순서, 엔드포인트 연결 |
+| [`Rpc`](src/SummerProject.Server/Rpc) | JSON-RPC 요청·응답 처리 |
+| [`Controllers`](src/SummerProject.Server/Controllers) | RPC 메서드별 Handler |
+| [`Services`](src/SummerProject.Server/Services) | 기능별 업무 규칙과 처리 흐름 |
+| [`Repositories`](src/SummerProject.Server/Repositories) | Dapper SQL, 조건부 갱신, 트랜잭션 |
+| [`Helpers`](src/SummerProject.Server/Helpers) | 역할이 명확한 생성·계산·검증·직렬화 타입 |
+| [`Exceptions`](src/SummerProject.Server/Exceptions) | 예상 가능한 기능별 업무 실패 |
+| [`Models`](src/SummerProject.Server/Models) | DTO, DB 행, 값 객체와 열거형 |
+| [`GameData/Catalogs`](src/SummerProject.Server/GameData/Catalogs) | 맵·스테이지 JSON 검증과 읽기 전용 조회 |
+| [`Infrastructure`](src/SummerProject.Server/Infrastructure) | SQLite, 보안, 구조화 로그 |
 
-### 문서 우선순위
+### Bootstrap과 Rpc
 
-문서와 코드가 충돌하면 다음 순서로 판단합니다.
+[`Bootstrap`](src/SummerProject.Server/Bootstrap)은 서버가 어떤 순서로 준비되는지를 담당합니다. 설정과 정적 Catalog를 검증하고 SQLite 마이그레이션을 적용한 뒤 `/rpc`와 `/health`를 연결합니다. 업무 규칙은 포함하지 않습니다.
 
-1. [JSON-RPC 2.0 공식 스펙](https://www.jsonrpc.org/specification)
-2. [앱 요구사항](docs/requirements/APP_REQUIREMENTS.md)
-3. [RPC 메서드 카탈로그](docs/contracts/RPC_METHOD_CATALOG.md)
-4. 승인된 [ADR](docs/architecture/adr)
-5. 그 밖의 아키텍처 문서
-6. 신규 목표 코드
-7. 기존 서버 코드
+[`Rpc`](src/SummerProject.Server/Rpc)는 다음 네 영역으로 나뉩니다.
 
-확정할 수 없는 내용은 임의로 구현하지 않고 관련 문서의 **미결정 사항**에 기록합니다.
-
-<details>
-<summary><strong>전체 Markdown 문서 34개 보기</strong></summary>
-
-#### 저장소 진입 문서
-
-- [README.md](README.md): 프로젝트 전체 소개와 빠른 시작
-- [AGENTS.md](AGENTS.md): AI가 반드시 지켜야 하는 저장소 규칙
-- [CONTRIBUTING.md](CONTRIBUTING.md): 기여, 리뷰, 검증, 커밋 절차
-- [CHANGELOG.md](CHANGELOG.md): 기능·계약 중심 변경 기록
-- [docs/README.md](docs/README.md): 상세 문서 지도와 읽는 순서
-
-#### 요구사항
-
-- [APP_REQUIREMENTS.md](docs/requirements/APP_REQUIREMENTS.md): FR, NFR, 업무 규칙, 범위와 미결정 사항
-- [DOMAIN_GLOSSARY.md](docs/requirements/DOMAIN_GLOSSARY.md): 프로젝트 공통 용어
-- [USE_CASES.md](docs/requirements/USE_CASES.md): 주요 정상·대안 흐름
-
-#### 외부 계약
-
-- [JSON_RPC_CONTRACT.md](docs/contracts/JSON_RPC_CONTRACT.md): JSON-RPC와 HTTP 결합 규칙
-- [RPC_METHOD_CATALOG.md](docs/contracts/RPC_METHOD_CATALOG.md): 메서드별 params, result, 인증, 오류
-- [ERROR_CATALOG.md](docs/contracts/ERROR_CATALOG.md): 표준·서버·업무 오류 코드
-
-#### 아키텍처와 보안
-
-- [ARCHITECTURE.md](docs/architecture/ARCHITECTURE.md): 구조, 책임, 의존 방향, 요청 흐름
-- [NAMING_CONVENTIONS.md](docs/architecture/NAMING_CONVENTIONS.md): 타입 접미사와 금지 이름
-- [DATA_MODEL.md](docs/architecture/DATA_MODEL.md): SQLite 스키마와 트랜잭션 정책
-- [SECURITY.md](docs/architecture/SECURITY.md): 인증, 토큰, 권한, 로그 보안
-- [adr/README.md](docs/architecture/adr/README.md): ADR 목록과 관리 규칙
-- [ADR-0001](docs/architecture/adr/0001-modular-monolith.md): 모듈형 모노리스
-- [ADR-0002](docs/architecture/adr/0002-json-rpc-over-http.md): JSON-RPC over HTTP
-- [ADR-0003](docs/architecture/adr/0003-sqlite-dapper.md): SQLite와 Dapper
-- [ADR-0004](docs/architecture/adr/0004-static-catalogs.md): 정적 JSON 카탈로그
-
-#### 개발과 테스트
-
-- [IMPLEMENTATION_PLAN.md](docs/engineering/IMPLEMENTATION_PLAN.md): Phase 0~8 구현 계획
-- [TEST_STRATEGY.md](docs/engineering/TEST_STRATEGY.md): 테스트 계층과 품질 게이트
-- [COMMENT_GUIDE.md](docs/engineering/COMMENT_GUIDE.md): 한국어 주석 규칙
-- [COMMIT_GUIDE.md](docs/engineering/COMMIT_GUIDE.md): 한국어 Conventional Commit 규칙
-
-#### 운영과 재구현 추적
-
-- [CONFIGURATION.md](docs/operations/CONFIGURATION.md): 설정 키와 비밀값 주입
-- [RUNBOOK.md](docs/operations/RUNBOOK.md): 실행, 상태 확인, 백업, 복구, 장애 대응
-- [AS_IS_BEHAVIOR_INVENTORY.md](docs/migration/AS_IS_BEHAVIOR_INVENTORY.md): 기존 서버에서 관찰한 동작
-- [GAP_ANALYSIS.md](docs/migration/GAP_ANALYSIS.md): 기존 구조와 목표 구조의 차이
-- [TRACEABILITY.md](docs/migration/TRACEABILITY.md): 요구사항, 구현, 테스트 상태 연결
-
-#### 템플릿과 하위 안내
-
-- [REQUIREMENT_TEMPLATE.md](docs/templates/REQUIREMENT_TEMPLATE.md): 새 요구사항 작성 형식
-- [ADR_TEMPLATE.md](docs/templates/ADR_TEMPLATE.md): 새 설계 결정 작성 형식
-- [AI_TASK_TEMPLATE.md](docs/templates/AI_TASK_TEMPLATE.md): AI 구현 요청 형식
-- [서버 소스 README](src/SummerProject.Server/README.md): 서버 폴더 책임
-- [테스트 README](tests/SummerProject.Server.Tests/README.md): 테스트 폴더와 DB 테스트 원칙
-
-</details>
-
-### 문서를 함께 바꾸는 규칙
-
-| 코드 변경 | 함께 확인할 문서 |
+| 하위 폴더 | 역할 |
 |---|---|
-| 외부 동작·RPC 변경 | 요구사항, RPC 카탈로그, 오류 카탈로그, 테스트, 추적성 |
-| DB 변경 | 데이터 모델, 새 SQL 마이그레이션, 테스트, 필요 시 ADR |
-| 보안 변경 | 보안 문서, 설정 문서, 위협 관련 테스트 |
-| 패키지 변경 | 선택 근거, 아키텍처 또는 ADR, 중앙 버전, 잠금 파일 |
-| 구현 완료 | 추적성 표와 CHANGELOG |
+| [`Contracts`](src/SummerProject.Server/Rpc/Contracts) | JSON-RPC 봉투, ID 값 객체, 오류 Packet |
+| [`Validation`](src/SummerProject.Server/Rpc/Validation) | JSON 구조 검증과 params 바인딩 |
+| [`Dispatching`](src/SummerProject.Server/Rpc/Dispatching) | Registry 조회, Handler 호출, 예외 변환 |
+| [`Serialization`](src/SummerProject.Server/Rpc/Serialization) | result 또는 error 응답 작성 |
 
-승인된 ADR과 이미 적용된 SQL 마이그레이션은 조용히 수정하지 않습니다. 결정이 바뀌면 새 ADR을, 스키마가 바뀌면 다음 번호의 마이그레이션을 추가합니다.
+이 계층은 `id` 생략과 `id: null`을 구분하고 요청 ID의 JSON 타입을 응답까지 보존합니다.
 
-### 이름과 주석 규칙
+### Controllers, Services, Repositories
 
-| 역할 | 접미사 | 예시 |
+[`Controllers`](src/SummerProject.Server/Controllers)는 ASP.NET MVC Controller가 아니라 [`IRpcMethodHandler<TRequest, TResponse>`](src/SummerProject.Server/Rpc/Dispatching/IRpcMethodHandler.cs) 구현을 보관합니다. Handler는 DTO를 Service 호출로 연결하며 HTTP 객체, 업무 규칙과 SQL을 직접 다루지 않습니다.
+
+[`Services`](src/SummerProject.Server/Services)는 여러 처리의 순서와 상태 규칙을 조정합니다. JSON-RPC 봉투를 알지 못하고 SQL도 보유하지 않습니다.
+
+[`Repositories`](src/SummerProject.Server/Repositories)는 Dapper를 사용해 SQLite에 접근합니다. DTO 대신 [`Models/Datas`](src/SummerProject.Server/Models/Datas)의 Model을 사용하고 모든 값을 매개변수로 전달합니다. 여러 테이블을 함께 변경할 때는 같은 `DbConnection`과 `DbTransaction`을 공유합니다.
+
+### Helpers, Exceptions, Models
+
+[`Helpers`](src/SummerProject.Server/Helpers)에는 `Factory`, `Generator`, `Calculator`, `Validator`, `Serializer`처럼 이름과 책임이 분명한 타입만 둡니다. [`Exceptions`](src/SummerProject.Server/Exceptions)는 Service와 Repository에서 발생하는 업무 실패를 기능별로 구분하고, Rpc 계층이 이를 오류 code와 key로 변환합니다.
+
+[`Models`](src/SummerProject.Server/Models)는 외부 계약과 DB 표현을 분리합니다.
+
+| 위치 | 역할 | 접미사 |
 |---|---|---|
-| 값 객체 | `Proto` | `StageProto` |
-| Dapper DB 행 | `Model` | `UserModel` |
-| RPC params | `Request` | `EnterStageRequest` |
-| RPC result | `Response` | `EnterStageResponse` |
-| DTO 내부 구성 | `Packet` | `StagePacket` |
+| [`Models/DTOs`](src/SummerProject.Server/Models/DTOs) | RPC 입력 | `Request` |
+| [`Models/DTOs`](src/SummerProject.Server/Models/DTOs) | RPC 출력 | `Response` |
+| [`Models/DTOs`](src/SummerProject.Server/Models/DTOs) | DTO 구성 요소 | `Packet` |
+| [`Models/Datas`](src/SummerProject.Server/Models/Datas) | Dapper DB 행 | `Model` |
+| [`Models/GameData`](src/SummerProject.Server/Models/GameData) | 검증된 정적 값 | `Proto` |
+| [`Models`](src/SummerProject.Server/Models) 아래 기능 폴더 | 내부 값 객체 | `Proto` |
 
-코드 식별자는 영어로 작성하고, 새 주석과 수정한 주석은 한국어로 작성합니다. 주석은 코드 동작을 번역하지 않고 업무 이유, JSON-RPC 불변 조건, 동시성, 트랜잭션, 보안 제약을 설명합니다.
+DB Model을 JSON-RPC 응답으로 직접 반환하지 않고, DTO가 DB Model에 의존하지 않도록 유지합니다.
 
----
+### GameData와 Infrastructure
 
-## 아직 결정되지 않은 것
+[`GameData/Catalogs`](src/SummerProject.Server/GameData/Catalogs)는 배포된 맵·스테이지 JSON을 읽고 검증된 Proto로 변환합니다. 성공한 데이터는 ID 기반 읽기 전용 Catalog에 저장하며 검증 실패 시 서버 시작을 중단합니다.
 
-- 기존 MySQL 운영 데이터를 SQLite로 이전할지 새 DB로 시작할지
-- 최초 배포에 Guest 로그인을 포함할지
-- 운영 RPO, RTO, 최대 동시 사용자, 최대 DB 크기
-- 데이터와 로그의 보존 기간
-- `tiles.Length == width × height`를 강제할지
-- Map1·Stage1의 최종 타일과 함정 콘텐츠
-
-현재 스테이지 완료 검증 목표는 서버 시작 시각과 최소 클리어 시간 확인까지입니다. 이것을 강한 치트 방지로 표현하지 않습니다.
+[`Infrastructure/Database`](src/SummerProject.Server/Infrastructure/Database)는 SQLite 연결, 마이그레이션과 health check를 담당합니다. 실제 기능 SQL은 [`Repositories`](src/SummerProject.Server/Repositories)에 둡니다. [`Infrastructure/Security`](src/SummerProject.Server/Infrastructure/Security)는 JWT와 Google 인증, 호출자 문맥을 담당하고, [`Infrastructure/Logging`](src/SummerProject.Server/Infrastructure/Logging)은 ZLogger와 민감정보 필터를 구성합니다.
 
 ---
 
-## 기여하기
+## 4. 요청 처리와 의존 방향
 
-1. [문서 지도](docs/README.md)에서 관련 문서를 찾습니다.
-2. [추적성 표](docs/migration/TRACEABILITY.md)에서 현재 상태를 확인합니다.
-3. 구현 전에 범위와 테스트 항목을 정리합니다.
-4. 코드, 테스트, 문서 추적성을 함께 변경합니다.
-5. build, test, format을 실행합니다.
-6. 스테이징된 diff를 기준으로 한국어 커밋 메시지를 작성합니다.
+```text
+HTTP Request
+   ▼
+JsonRpcEndpoint
+   ▼
+JsonRpcRequestParser
+   ▼
+JsonRpcRequestProcessor
+   ▼
+JsonRpcDispatcher
+   ▼
+IRpcMethodHandler
+   ▼
+Service
+   ▼
+Repository / Helper / Catalog
+   ▼
+JsonRpcResponseWriter
+```
 
-자세한 절차는 [CONTRIBUTING.md](CONTRIBUTING.md), AI 작업 규칙은 [AGENTS.md](AGENTS.md)를 기준으로 합니다.
+[`JsonRpcEndpoint`](src/SummerProject.Server/Bootstrap/JsonRpcEndpoint.cs)가 HTTP 규칙과 본문 크기를 확인하고, [`JsonRpcRequestParser`](src/SummerProject.Server/Rpc/Validation/JsonRpcRequestParser.cs)가 단일 요청·알림·배치를 구분합니다. [`JsonRpcRequestProcessor`](src/SummerProject.Server/Rpc/Dispatching/JsonRpcRequestProcessor.cs)는 배치 요소를 독립적으로 처리하고 [`JsonRpcDispatcher`](src/SummerProject.Server/Rpc/Dispatching/JsonRpcDispatcher.cs)는 대소문자를 구분하는 Registry에서 Handler를 찾습니다.
+
+Handler 아래로는 HTTP와 JSON-RPC 봉투가 전달되지 않습니다. Service와 Repository의 처리 결과는 Handler에서 Response DTO로 바뀌고, Response Writer가 요청 ID를 포함한 최종 JSON을 작성합니다.
+
+의존 방향은 위에서 아래로만 흐릅니다.
+
+```text
+Controllers ─► Services ─► Repositories
+     │              │             │
+     ▼              ▼             ▼
+Models/DTOs   Helpers/Models   Models/Datas
+                                  │
+                                  ▼
+                         Infrastructure/Database
+```
+
+Repository가 Response DTO를 만들거나 Service가 JSON-RPC Error Packet을 반환하는 역방향 의존은 허용하지 않습니다.
+
+---
+
+## 5. 테스트와 문서 구조
+
+### 테스트
+
+```text
+tests/SummerProject.Server.Tests
+├─ Auth / Characters / Currencies / Stages / Rooms
+├─ Gameplay
+├─ Rpc
+├─ GameData/Catalogs
+└─ Infrastructure
+   ├─ Configuration
+   ├─ Database
+   └─ Logging
+```
+
+테스트의 [`Rpc`](tests/SummerProject.Server.Tests/Rpc)는 가짜 Handler로 프로토콜 자체를 검증하고, [`Auth`](tests/SummerProject.Server.Tests/Auth), [`Characters`](tests/SummerProject.Server.Tests/Characters), [`Currencies`](tests/SummerProject.Server.Tests/Currencies), [`Stages`](tests/SummerProject.Server.Tests/Stages), [`Rooms`](tests/SummerProject.Server.Tests/Rooms)는 TestServer에서 `POST /rpc`부터 SQLite까지 전체 경로를 확인합니다. DB 테스트는 in-memory 대체 DB가 아니라 테스트마다 별도의 임시 SQLite 파일을 사용합니다.
+
+[`Gameplay`](tests/SummerProject.Server.Tests/Gameplay)은 여러 기능이 같은 트랜잭션을 공유하는 경계를 검증하고, [`GameData/Catalogs`](tests/SummerProject.Server.Tests/GameData/Catalogs)는 테스트용 JSON을 구성해 정상 적재와 시작 실패를 확인합니다.
+
+### 문서
+
+| 영역 | 내용 |
+|---|---|
+| [`requirements`](docs/requirements) | 기능·비기능 요구사항, 용어, 유스케이스 |
+| [`contracts`](docs/contracts) | JSON-RPC, RPC 메서드, 오류 계약 |
+| [`architecture`](docs/architecture) | 구조, 이름, 데이터 모델, 보안, ADR |
+| [`engineering`](docs/engineering) | 구현 계획, 테스트, 주석, 커밋 규칙 |
+| [`operations`](docs/operations) | 설정, 실행, 백업과 복구 |
+| [`migration`](docs/migration) | 기존 동작, 차이 분석, 추적성 |
+| [`templates`](docs/templates) | 요구사항, ADR, AI 작업 형식 |
+
+[docs/README.md](docs/README.md)가 전체 문서의 읽기 순서와 변경 규칙을 안내합니다.
+
+---
+
+## 6. 이름과 주석 규칙
+
+타입은 역할이 드러나는 이름을 사용합니다. Handler, Service, Repository, Factory, Validator, Options, Exception 같은 접미사는 실제 책임과 일치할 때만 사용합니다.
+
+범용 `Manager`, `Helper`, `Util`, `Info`, `Data` 타입은 만들지 않습니다. [`Helpers`](src/SummerProject.Server/Helpers) 폴더 안에서도 구체적인 역할이 타입 이름에 나타나야 합니다.
+
+코드 식별자는 영어, 설명 주석은 한국어를 사용합니다. 주석은 코드를 번역하지 않고 구조가 필요한 이유, JSON-RPC 불변 조건, 동시성, 트랜잭션과 보안 제약을 설명합니다.
+
+---
+
+## 7. AI를 사용한 과정
+
+먼저 AI에게 기존 `SummerLoginServer`, `SummerGameServer`, `Persistence`의 Controller, Service, Entity, 마이그레이션, 설정과 배포 파일을 분석시켰습니다. 기존 구조를 복사하지 않고 외부에서 확인되는 동작과 데이터 규칙만 추출하게 했으며, 결과를 [AS_IS_BEHAVIOR_INVENTORY.md](docs/migration/AS_IS_BEHAVIOR_INVENTORY.md)와 [GAP_ANALYSIS.md](docs/migration/GAP_ANALYSIS.md)에 정리했습니다.
+
+분석 결과를 바로 코드로 만들지 않고 요구사항, 용어집, 유스케이스, JSON-RPC 계약, RPC·오류 카탈로그를 먼저 작성하게 했습니다. 이후 목표 구조와 데이터 모델을 설계하고, 중요한 기술 선택은 ADR로 분리했습니다.
+
+구현은 한 번에 맡기지 않고 저장소 기반, JSON-RPC, 설정·로그, SQLite, 정적 Catalog, 인증, 캐릭터·재화, 스테이지, 사용자 방 순서로 나누었습니다. 각 작업마다 관련 요구사항 ID, RPC, 수정 가능한 폴더, 범위 밖의 내용과 필수 테스트를 함께 전달했습니다.
+
+테스트가 실패했을 때는 즉시 우회 코드를 작성하게 하지 않고 같은 조건을 재현한 뒤 실패한 계층과 원인을 확인하게 했습니다. 수정 후에는 관련 테스트뿐 아니라 프로토콜, SQLite 제약과 추적성 문서까지 다시 대조했습니다.
+
+마지막으로 추가된 코드와 테스트를 요구사항 추적성 표에 연결하고, 주석은 한국어 주석 기준에 맞춰 정리했습니다. 커밋 메시지는 작업 대화가 아니라 실제 스테이징된 diff만 분석해 작성하도록 했습니다.
+
+---
+
+## 8. AI 작업 지시 문서
+
+AI 작업 규칙은 대화에만 두지 않고 Markdown 문서로 관리했습니다.
+
+| 문서 | AI에게 지시하는 내용 |
+|---|---|
+| [AGENTS.md](AGENTS.md) | 문서 우선순위, 기술 제약, 폴더 책임, 보안과 완료 조건 |
+| [docs/README.md](docs/README.md) | 작업 전에 읽을 문서의 순서와 변경 규칙 |
+| [AI_TASK_TEMPLATE.md](docs/templates/AI_TASK_TEMPLATE.md) | 목표, 범위, 요구사항 ID, 필수 테스트, 완료 조건 작성 형식 |
+| [IMPLEMENTATION_PLAN.md](docs/engineering/IMPLEMENTATION_PLAN.md) | 구현 Phase와 단계별 선행 조건 |
+| [TEST_STRATEGY.md](docs/engineering/TEST_STRATEGY.md) | 프로토콜, 기능, SQLite, 동시성 테스트 기준 |
+| [COMMENT_GUIDE.md](docs/engineering/COMMENT_GUIDE.md) | 한국어 주석에 남길 이유와 불변 조건 |
+| [COMMIT_GUIDE.md](docs/engineering/COMMIT_GUIDE.md) | 스테이징된 diff 기반 한국어 커밋 메시지 규칙 |
+| [TRACEABILITY.md](docs/migration/TRACEABILITY.md) | 요구사항과 구현·테스트의 연결 및 완료 판단 |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | 문서 확인부터 구현, 검증, 추적성 갱신까지의 작업 절차 |
+
+[AGENTS.md](AGENTS.md)가 저장소 전체 규칙을 제공하고, [docs/README.md](docs/README.md)가 읽을 문서를 안내합니다. 개별 작업은 [AI_TASK_TEMPLATE.md](docs/templates/AI_TASK_TEMPLATE.md) 형식으로 범위를 제한하며, 구현 후에는 [TEST_STRATEGY.md](docs/engineering/TEST_STRATEGY.md)와 [TRACEABILITY.md](docs/migration/TRACEABILITY.md)를 기준으로 완료 여부를 확인합니다. 주석과 커밋 메시지는 각각 별도 가이드를 적용해 매 작업에서 같은 기준을 반복하도록 구성했습니다.
