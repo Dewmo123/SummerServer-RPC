@@ -22,7 +22,8 @@ namespace SummerProject.Server.Tests.Auth;
 internal sealed class AuthenticationTestApplicationFactory(
     string environment = "Production",
     bool developmentLoginEnabled = false,
-    string developmentUsername = "developer") : ConfiguredServerApplicationFactory
+    string developmentUsername = "developer",
+    TimeProvider? timeProvider = null) : ConfiguredServerApplicationFactory
 {
     public FakeGoogleIdTokenValidator GoogleValidator { get; } = new();
 
@@ -49,6 +50,13 @@ internal sealed class AuthenticationTestApplicationFactory(
         {
             services.RemoveAll<IGoogleIdTokenValidator>();
             services.AddSingleton<IGoogleIdTokenValidator>(GoogleValidator);
+            if (timeProvider is not null)
+            {
+                // 시간 경계 테스트에서는 토큰과 스테이지가 같은 제어 가능한 서버 시계를 사용한다.
+                services.RemoveAll<TimeProvider>();
+                services.AddSingleton(timeProvider);
+            }
+
             services.AddAuthenticatedJsonRpcMethod<
                 ProtectedRequest,
                 ProtectedResponse,

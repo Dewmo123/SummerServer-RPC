@@ -54,6 +54,24 @@ internal static class JsonRpcErrors
     public static JsonRpcErrorPacket CurrencyOverflow(string traceId) =>
         Create(1304, "재화 한도를 초과합니다.", "CURRENCY_OVERFLOW", traceId);
 
+    public static JsonRpcErrorPacket StageNotFound(string traceId) =>
+        Create(1401, "존재하지 않는 스테이지입니다.", "STAGE_NOT_FOUND", traceId);
+
+    public static JsonRpcErrorPacket StageRunNotFound(string traceId) =>
+        Create(1402, "스테이지 실행 기록을 찾을 수 없습니다.", "STAGE_RUN_NOT_FOUND", traceId);
+
+    public static JsonRpcErrorPacket StageRunForbidden(string traceId) =>
+        Create(1403, "다른 사용자의 실행을 완료할 수 없습니다.", "STAGE_RUN_FORBIDDEN", traceId);
+
+    public static JsonRpcErrorPacket StageRunAlreadyCompleted(string traceId) =>
+        Create(1404, "이미 처리된 스테이지 실행입니다.", "STAGE_RUN_ALREADY_COMPLETED", traceId);
+
+    public static JsonRpcErrorPacket StageClearTooEarly(string traceId) =>
+        Create(1405, "최소 클리어 시간이 지나지 않았습니다.", "STAGE_CLEAR_TOO_EARLY", traceId);
+
+    public static JsonRpcErrorPacket StageRewardFailed(string traceId) =>
+        Create(1406, "보상 지급에 실패했습니다.", "STAGE_REWARD_FAILED", traceId);
+
     private static JsonRpcErrorPacket Create(int code, string message, string key, string traceId) =>
         new(code, message, new JsonRpcErrorDataPacket(key, traceId));
 }

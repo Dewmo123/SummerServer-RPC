@@ -7,7 +7,7 @@
 - `진행 중`: 코드 또는 테스트 일부가 있음
 - `완료`: 구현, 자동 테스트, 문서 검증이 모두 끝남
 
-Phase 0 저장소 기반, Phase 1 JSON-RPC 프로토콜 코어, Phase 2 관측성과 설정, Phase 3 SQLite 기반, Phase 4 정적 카탈로그, Phase 5 인증 수직 기능을 구현했습니다. 후속 업무 Handler는 `Controllers`, 업무 Service는 `Services`, SQL 접근은 `Repositories`, 생성 보조 타입은 `Helpers`, 업무 예외는 `Exceptions`, 모델은 `Models`에 구현합니다.
+Phase 0 저장소 기반부터 Phase 7 스테이지까지 구현했습니다. 후속 업무 Handler는 `Controllers`, 업무 Service는 `Services`, SQL 접근은 `Repositories`, 생성 보조 타입은 `Helpers`, 업무 예외는 `Exceptions`, 모델은 `Models`에 구현합니다.
 
 ## 기능 추적표
 
@@ -23,9 +23,9 @@ Phase 0 저장소 기반, Phase 1 JSON-RPC 프로토콜 코어, Phase 2 관측�
 | FR-CURRENCY-001 | `currency.getMine` | [GetMyCurrencyHandler](../../src/SummerProject.Server/Controllers/Currencies/GetMyCurrencyHandler.cs), [CurrencyQueryService](../../src/SummerProject.Server/Services/Currencies/CurrencyQueryService.cs) | [지연 생성, 잘못된 코드, 사용자 없음](../../tests/SummerProject.Server.Tests/Currencies/CurrencyEndpointTests.cs) | 완료 |
 | FR-CURRENCY-002 | `currency.listMine` | [ListMyCurrenciesHandler](../../src/SummerProject.Server/Controllers/Currencies/ListMyCurrenciesHandler.cs), [CurrencyRepository](../../src/SummerProject.Server/Repositories/Currencies/CurrencyRepository.cs) | [모든 코드, 정렬, 동시 생성](../../tests/SummerProject.Server.Tests/Currencies/CurrencyEndpointTests.cs) | 완료 |
 | FR-CURRENCY-003 | 재화 변경 | [CurrencyBalanceService](../../src/SummerProject.Server/Services/Currencies/CurrencyBalanceService.cs), [CurrencyRepository](../../src/SummerProject.Server/Repositories/Currencies/CurrencyRepository.cs) | [증가, 차감, 부족, overflow, 경쟁](../../tests/SummerProject.Server.Tests/Currencies/CurrencyBalanceServiceTests.cs), [보상 트랜잭션 공유](../../tests/SummerProject.Server.Tests/Gameplay/RewardTransactionCompositionTests.cs) | 완료 |
-| FR-STAGE-001 | `stage.get` | `Controllers/Stages/GetStageHandler`, `GameData/Catalogs/Stages` | 조회·없음 구현 전, [카탈로그 적재·검증](../../tests/SummerProject.Server.Tests/GameData/Catalogs/CatalogLoaderTests.cs), [시작 검증](../../tests/SummerProject.Server.Tests/GameData/Catalogs/CatalogStartupTests.cs) | 진행 중 |
-| FR-STAGE-002 | `stage.enter` | `Controllers/Stages/EnterStageHandler`, `Services/Stages` | 기존 포기, 새 실행, 동시 입장 | 구현 전 |
-| FR-STAGE-003 | `stage.complete` | `Controllers/Stages/CompleteStageHandler`, `Services/Stages` | 소유권, 시간, 중복, 보상 롤백 | 구현 전 |
+| FR-STAGE-001 | `stage.get` | [GetStageHandler](../../src/SummerProject.Server/Controllers/Stages/GetStageHandler.cs), [StageCatalogQueryService](../../src/SummerProject.Server/Services/Stages/StageCatalogQueryService.cs), [StageCatalog](../../src/SummerProject.Server/GameData/Catalogs/Stages/StageCatalog.cs) | [공개 조회·없음](../../tests/SummerProject.Server.Tests/Stages/StageEndpointTests.cs), [카탈로그 적재·검증](../../tests/SummerProject.Server.Tests/GameData/Catalogs/CatalogLoaderTests.cs), [시작 검증](../../tests/SummerProject.Server.Tests/GameData/Catalogs/CatalogStartupTests.cs) | 완료 |
+| FR-STAGE-002 | `stage.enter` | [EnterStageHandler](../../src/SummerProject.Server/Controllers/Stages/EnterStageHandler.cs), [StageEntryService](../../src/SummerProject.Server/Services/Stages/StageEntryService.cs), [StageRunRepository](../../src/SummerProject.Server/Repositories/Stages/StageRunRepository.cs) | [기존 포기, 새 실행, 사용자·스테이지 없음, 동시 입장](../../tests/SummerProject.Server.Tests/Stages/StageEndpointTests.cs) | 완료 |
+| FR-STAGE-003 | `stage.complete` | [CompleteStageHandler](../../src/SummerProject.Server/Controllers/Stages/CompleteStageHandler.cs), [StageCompletionService](../../src/SummerProject.Server/Services/Stages/StageCompletionService.cs), [StageRunRepository](../../src/SummerProject.Server/Repositories/Stages/StageRunRepository.cs) | [소유권, 시간 경계, 중복·동시 완료, 스냅샷, 보상 롤백](../../tests/SummerProject.Server.Tests/Stages/StageCompletionTests.cs) | 완료 |
 | FR-ROOM-001 | `room.upsertMine` | `Controllers/Rooms/UpsertMyRoomHandler`, `Services/Rooms` | 종류, 좌표, 중복, 회전, 크기, upsert | 구현 전 |
 | FR-ROOM-002 | `room.getMine` | `Controllers/Rooms/GetMyRoomHandler`, `Services/Rooms` | 정상, 방 없음, 카탈로그 불일치 | 구현 전 |
 | FR-SYSTEM-001 | `GET /health` | ASP.NET Core Health Checks, `DatabaseHealthCheck` | [프로세스·SQLite 정상, DB 불가·정보 비노출](../../tests/SummerProject.Server.Tests/HealthEndpointTests.cs) | 완료 |

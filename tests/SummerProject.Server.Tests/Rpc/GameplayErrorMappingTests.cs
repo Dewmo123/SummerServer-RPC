@@ -1,5 +1,6 @@
 using SummerProject.Server.Exceptions.Characters;
 using SummerProject.Server.Exceptions.Currencies;
+using SummerProject.Server.Exceptions.Stages;
 using SummerProject.Server.Exceptions.Users;
 using SummerProject.Server.Rpc.Contracts;
 using SummerProject.Server.Rpc.Dispatching;
@@ -16,7 +17,13 @@ public sealed class GameplayErrorMappingTests
         { new CurrencyInvalidTypeException(), 1301, "CURRENCY_INVALID_TYPE" },
         { new CurrencyInsufficientException(), 1302, "CURRENCY_INSUFFICIENT" },
         { new CurrencyInvalidAmountException(), 1303, "CURRENCY_INVALID_AMOUNT" },
-        { new CurrencyOverflowException(), 1304, "CURRENCY_OVERFLOW" }
+        { new CurrencyOverflowException(), 1304, "CURRENCY_OVERFLOW" },
+        { new StageNotFoundException(), 1401, "STAGE_NOT_FOUND" },
+        { new StageRunNotFoundException(), 1402, "STAGE_RUN_NOT_FOUND" },
+        { new StageRunForbiddenException(), 1403, "STAGE_RUN_FORBIDDEN" },
+        { new StageRunAlreadyCompletedException(), 1404, "STAGE_RUN_ALREADY_COMPLETED" },
+        { new StageClearTooEarlyException(), 1405, "STAGE_CLEAR_TOO_EARLY" },
+        { new StageRewardFailedException(), 1406, "STAGE_REWARD_FAILED" }
     };
 
     [Theory]

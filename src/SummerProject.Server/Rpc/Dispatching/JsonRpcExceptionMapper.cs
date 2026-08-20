@@ -1,6 +1,7 @@
 using SummerProject.Server.Exceptions.Auth;
 using SummerProject.Server.Exceptions.Characters;
 using SummerProject.Server.Exceptions.Currencies;
+using SummerProject.Server.Exceptions.Stages;
 using SummerProject.Server.Exceptions.Users;
 using SummerProject.Server.Rpc.Contracts;
 using SummerProject.Server.Rpc.Validation;
@@ -30,6 +31,12 @@ internal sealed class JsonRpcExceptionMapper
             CurrencyInsufficientException => JsonRpcErrors.CurrencyInsufficient(traceId),
             CurrencyInvalidAmountException => JsonRpcErrors.CurrencyInvalidAmount(traceId),
             CurrencyOverflowException => JsonRpcErrors.CurrencyOverflow(traceId),
+            StageNotFoundException => JsonRpcErrors.StageNotFound(traceId),
+            StageRunNotFoundException => JsonRpcErrors.StageRunNotFound(traceId),
+            StageRunForbiddenException => JsonRpcErrors.StageRunForbidden(traceId),
+            StageRunAlreadyCompletedException => JsonRpcErrors.StageRunAlreadyCompleted(traceId),
+            StageClearTooEarlyException => JsonRpcErrors.StageClearTooEarly(traceId),
+            StageRewardFailedException => JsonRpcErrors.StageRewardFailed(traceId),
             _ => JsonRpcErrors.InternalError(traceId)
         };
     }

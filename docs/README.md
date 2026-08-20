@@ -72,7 +72,7 @@
 
 ## 변경 규칙
 
-- 신규 구현 위치는 `src/SummerProject.Server`의 `Controllers`, `Services`, `Models`, `GameData`, `Infrastructure`, `Rpc`를 기준으로 하며 세부 책임은 [아키텍처](architecture/ARCHITECTURE.md)를 따릅니다.
+- 신규 구현 위치는 `src/SummerProject.Server`의 `Controllers`, `Services`, `Repositories`, `Helpers`, `Exceptions`, `Models`, `GameData`, `Infrastructure`, `Rpc`를 기준으로 하며 세부 책임은 [아키텍처](architecture/ARCHITECTURE.md)를 따릅니다.
 - 외부 동작 변경: 요구사항, RPC 카탈로그, 오류 카탈로그, 테스트, 추적성 표를 갱신합니다.
 - DB 변경: 데이터 모델, SQL 마이그레이션, ADR 또는 변경 근거를 갱신합니다.
 - 보안 변경: 보안 문서와 위협 관련 테스트를 갱신합니다.

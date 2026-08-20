@@ -60,6 +60,21 @@ internal sealed class CurrencyRepository(SqliteConnectionFactory connectionFacto
         await using SqliteConnection connection =
             await connectionFactory.OpenConnectionAsync(cancellationToken);
         await using SqliteTransaction transaction = connection.BeginTransaction(deferred: false);
+        CurrencyListRepositoryResult result = await ListOrCreateInTransactionAsync(
+            connection,
+            transaction,
+            userId,
+            cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+        return result;
+    }
+
+    internal static async ValueTask<CurrencyListRepositoryResult> ListOrCreateInTransactionAsync(
+        SqliteConnection connection,
+        SqliteTransaction transaction,
+        long userId,
+        CancellationToken cancellationToken)
+    {
 
         // 유일 복합 키와 충돌 무시 삽입으로 동시 최초 조회에도 종류별 행을 하나만 유지한다.
         foreach (CurrencyTypeProto type in Enum.GetValues<CurrencyTypeProto>())
@@ -88,14 +103,12 @@ internal sealed class CurrencyRepository(SqliteConnectionFactory connectionFacto
                 transaction,
                 userId,
                 cancellationToken);
-            await transaction.CommitAsync(cancellationToken);
             return new CurrencyListRepositoryResult(
                 userExists
                     ? CurrencyRepositoryStatus.CurrencyNotFound
                     : CurrencyRepositoryStatus.UserNotFound);
         }
 
-        await transaction.CommitAsync(cancellationToken);
         return new CurrencyListRepositoryResult(CurrencyRepositoryStatus.Succeeded, currencies);
     }
 

@@ -1,3 +1,5 @@
+using Microsoft.Data.Sqlite;
+
 using SummerProject.Server.Exceptions.Currencies;
 using SummerProject.Server.Exceptions.Users;
 using SummerProject.Server.Models.Currencies;
@@ -35,6 +37,29 @@ internal sealed class CurrencyQueryService(CurrencyRepository currencyRepository
         CurrencyListRepositoryResult result = await currencyRepository.ListOrCreateAsync(
             userId,
             cancellationToken);
+        return MapList(result);
+    }
+
+    internal async ValueTask<IReadOnlyList<CurrencyProto>> ListMineInTransactionAsync(
+        SqliteConnection connection,
+        SqliteTransaction transaction,
+        long userId,
+        CancellationToken cancellationToken)
+    {
+        // 완료 응답의 전체 재화가 보상과 같은 커밋 시점을 보도록 호출자의 트랜잭션을 공유한다.
+        CurrencyListRepositoryResult result = await CurrencyRepository.ListOrCreateInTransactionAsync(
+            connection,
+            transaction,
+            userId,
+            cancellationToken);
+        return MapList(result);
+    }
+
+    private static CurrencyProto ToProto(CurrencyModel currency) =>
+        new(currency.Type, currency.Amount);
+
+    private static IReadOnlyList<CurrencyProto> MapList(CurrencyListRepositoryResult result)
+    {
         if (result.Status == CurrencyRepositoryStatus.UserNotFound)
         {
             throw new UserNotFoundException();
@@ -51,9 +76,6 @@ internal sealed class CurrencyQueryService(CurrencyRepository currencyRepository
             .Select(ToProto)
             .ToArray();
     }
-
-    private static CurrencyProto ToProto(CurrencyModel currency) =>
-        new(currency.Type, currency.Amount);
 
     internal static void ValidateType(CurrencyTypeProto type)
     {

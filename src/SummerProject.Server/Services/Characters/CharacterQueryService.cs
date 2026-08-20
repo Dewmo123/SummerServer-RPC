@@ -1,3 +1,5 @@
+using Microsoft.Data.Sqlite;
+
 using SummerProject.Server.Exceptions.Characters;
 using SummerProject.Server.Exceptions.Users;
 using SummerProject.Server.Helpers.Characters;
@@ -16,6 +18,27 @@ internal sealed class CharacterQueryService(
         CancellationToken cancellationToken)
     {
         CharacterRepositoryResult result = await characterRepository.GetOrCreateAsync(
+            userId,
+            cancellationToken);
+        return result.Status switch
+        {
+            CharacterRepositoryStatus.Succeeded => ToProto(result.Character!),
+            CharacterRepositoryStatus.UserNotFound => throw new UserNotFoundException(),
+            CharacterRepositoryStatus.CharacterNotFound => throw new CharacterNotFoundException(),
+            _ => throw new InvalidOperationException("알 수 없는 캐릭터 조회 결과입니다.")
+        };
+    }
+
+    internal async ValueTask<CharacterProto> GetMineInTransactionAsync(
+        SqliteConnection connection,
+        SqliteTransaction transaction,
+        long userId,
+        CancellationToken cancellationToken)
+    {
+        // 경험치가 없는 보상도 완료 결과에 캐릭터 상태를 포함하도록 호출자의 트랜잭션에 참여한다.
+        CharacterRepositoryResult result = await CharacterRepository.GetOrCreateInTransactionAsync(
+            connection,
+            transaction,
             userId,
             cancellationToken);
         return result.Status switch
