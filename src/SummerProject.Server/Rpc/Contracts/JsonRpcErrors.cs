@@ -33,6 +33,27 @@ internal static class JsonRpcErrors
     public static JsonRpcErrorPacket DevelopmentUserNotFound(string traceId) =>
         Create(1004, "개발 사용자를 찾을 수 없습니다.", "AUTH_DEVELOPMENT_USER_NOT_FOUND", traceId);
 
+    public static JsonRpcErrorPacket UserNotFound(string traceId) =>
+        Create(1101, "사용자를 찾을 수 없습니다.", "USER_NOT_FOUND", traceId);
+
+    public static JsonRpcErrorPacket CharacterNotFound(string traceId) =>
+        Create(1201, "캐릭터를 찾을 수 없습니다.", "CHARACTER_NOT_FOUND", traceId);
+
+    public static JsonRpcErrorPacket CharacterInvalidExperience(string traceId) =>
+        Create(1202, "지급 경험치가 유효하지 않습니다.", "CHARACTER_INVALID_EXPERIENCE", traceId);
+
+    public static JsonRpcErrorPacket CurrencyInvalidType(string traceId) =>
+        Create(1301, "지원하지 않는 재화 종류입니다.", "CURRENCY_INVALID_TYPE", traceId);
+
+    public static JsonRpcErrorPacket CurrencyInsufficient(string traceId) =>
+        Create(1302, "재화가 부족합니다.", "CURRENCY_INSUFFICIENT", traceId);
+
+    public static JsonRpcErrorPacket CurrencyInvalidAmount(string traceId) =>
+        Create(1303, "재화 변경량이 유효하지 않습니다.", "CURRENCY_INVALID_AMOUNT", traceId);
+
+    public static JsonRpcErrorPacket CurrencyOverflow(string traceId) =>
+        Create(1304, "재화 한도를 초과합니다.", "CURRENCY_OVERFLOW", traceId);
+
     private static JsonRpcErrorPacket Create(int code, string message, string key, string traceId) =>
         new(code, message, new JsonRpcErrorDataPacket(key, traceId));
 }

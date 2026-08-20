@@ -1,6 +1,6 @@
 # 목표 서버 소스 루트
 
-이 폴더는 JSON-RPC 2.0 기반 모노리스의 신규 구현 위치입니다. Phase 5까지 `POST /rpc` 프로토콜 코어, ZLogger 구조화 로그, 시작 설정 검증, SQLite 마이그레이션, 정적 맵·스테이지 카탈로그와 인증 수직 기능을 구성했습니다. 현재 `auth.login.google`, `auth.token.refresh`, `auth.logout`을 제공하며 개발 환경과 명시 옵션이 모두 허용할 때만 `auth.login.development`를 제공합니다.
+이 폴더는 JSON-RPC 2.0 기반 모노리스의 신규 구현 위치입니다. Phase 6까지 `POST /rpc` 프로토콜 코어, ZLogger 구조화 로그, 시작 설정 검증, SQLite 마이그레이션, 정적 맵·스테이지 카탈로그, 인증, 캐릭터와 재화 기능을 구성했습니다. 현재 인증 RPC와 `character.getMine`, `currency.getMine`, `currency.listMine`을 제공하며 개발 환경과 명시 옵션이 모두 허용할 때만 `auth.login.development`를 제공합니다.
 
 실행 시 `Jwt:SigningKey`는 32바이트 이상으로, `Google:ClientIds`는 하나 이상의 허용된 OAuth Client ID로 외부 구성해야 합니다. 저장소의 `appsettings.json`에는 비밀값과 실제 Client ID를 넣지 않습니다.
 
@@ -16,7 +16,7 @@
 | `Controllers` | 기능별 JSON-RPC Handler와 요청 진입 조정 |
 | `Services` | 인증·캐릭터·재화·스테이지·방 업무 규칙과 흐름 조정 |
 | `Repositories` | 기능별 Dapper SQL과 명시적인 트랜잭션 |
-| `Helpers` | 기능별 Factory, Generator와 명확한 생성·변환 책임 |
+| `Helpers` | 기능별 Factory, Generator, Calculator와 명확한 보조 책임 |
 | `Exceptions` | 예상 가능한 기능별 업무 실패 예외 |
 | `Models/DTOs` | RPC Request·Response·Packet |
 | `Models/Datas` | Dapper DB 행 매핑 Model |

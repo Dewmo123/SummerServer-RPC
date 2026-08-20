@@ -4,11 +4,11 @@
 
 > **현재 상태**
 >
-> 서버 기반인 **Phase 0~4까지 완료**했습니다.
+> **Phase 0~6까지 완료**했습니다.
 >
-> JSON-RPC 처리, SQLite 마이그레이션, 구조화 로그, 정적 맵·스테이지 적재는 동작합니다.
+> JSON-RPC 처리, SQLite 마이그레이션, 구조화 로그, 정적 카탈로그, 인증, 캐릭터와 재화 기능이 동작합니다.
 >
-> 로그인·캐릭터·재화·스테이지 진행·사용자 방 RPC는 아직 구현 전입니다.
+> 스테이지 진행과 사용자 방 RPC는 아직 구현 전입니다.
 
 [빠른 실행](#빠른-실행) · [현재 진행 상황](#현재-진행-상황) · [코드 구조](#코드-구조) · [AI 활용 방식](#ai-활용-방식) · [문서 안내](#문서-안내)
 
@@ -23,8 +23,8 @@
 | 외부 진입점 | 게임 기능은 `POST /rpc`, 상태 확인은 `GET /health` |
 | 데이터베이스 | SQLite + Dapper |
 | 정적 데이터 | JSON 파일을 시작 시 검증한 뒤 메모리에 적재 |
-| 현재 완료 | 저장소 기반, JSON-RPC 코어, 설정·로그, SQLite, 정적 카탈로그 |
-| 다음 단계 | Phase 5 인증 기능 |
+| 현재 완료 | 저장소 기반, JSON-RPC 코어, 설정·로그, SQLite, 정적 카탈로그, 인증, 캐릭터·재화 |
+| 다음 단계 | Phase 7 스테이지 기능 |
 | 최신 상태 기준 | [요구사항 추적성 표](docs/migration/TRACEABILITY.md) |
 
 ### 지금 사용할 수 있는 기능
@@ -40,10 +40,17 @@
   - SQLite 연결 확인
   - `SELECT 1` 확인
   - 적용된 마이그레이션 이름과 체크섬 확인
+- 인증
+  - Google·개발 로그인, JWT 검증
+  - 리프레시 토큰 회전·재사용 탐지·로그아웃
+- 캐릭터와 재화
+  - 캐릭터 지연 생성과 현재 성장 상태 조회
+  - 재화 단건·전체 지연 생성 조회와 코드 순 정렬
+  - 후속 스테이지 보상에서 사용할 원자적 경험치·재화 변경 서비스
 
-> **중요:** 현재 프로덕션 코드에는 게임 업무 Handler가 등록되어 있지 않습니다.
+> **중요:** 개발 로그인은 Development 환경에서 명시적으로 활성화한 경우에만 등록됩니다.
 >
-> 따라서 `auth.*`, `character.*`, `currency.*`, `stage.*`, `room.*` 호출은 아직 `Method not found`를 반환합니다.
+> `stage.*`, `room.*` 호출은 아직 `Method not found`를 반환합니다.
 
 ---
 
@@ -113,7 +120,9 @@ Method Registry와 params 바인딩
     ▼
 Controllers의 RPC Handler
     ▼
-Services의 업무 규칙과 Repository
+Services의 업무 규칙
+    ▼
+Repositories의 Dapper SQL과 트랜잭션
     ▼
 SQLite / 정적 Catalog
     │
@@ -154,7 +163,10 @@ SummerServer-RPC
 │  │  ├─ Datas                  Dapper DB 행 Model
 │  │  └─ GameData               검증된 정적 Proto
 │  ├─ Controllers               기능별 JSON-RPC Handler
-│  └─ Services                  업무 규칙, Repository, 트랜잭션
+│  ├─ Services                  기능별 업무 규칙과 흐름
+│  ├─ Repositories              Dapper SQL과 트랜잭션
+│  ├─ Helpers                   기능별 Factory·Generator·Calculator
+│  └─ Exceptions                기능별 업무 실패
 │
 ├─ tests/SummerProject.Server.Tests
 ├─ docs
@@ -167,12 +179,15 @@ SummerServer-RPC
 
 - **Rpc**는 JSON-RPC 규격만 처리합니다. 게임 업무와 SQL을 알지 못합니다.
 - **Controllers**는 DTO를 Service 호출로 연결합니다. 업무 규칙과 SQL을 넣지 않습니다.
-- **Services**는 인증·캐릭터·재화·스테이지·방 규칙과 Repository를 가집니다.
+- **Services**는 인증·캐릭터·재화·스테이지·방의 업무 규칙과 흐름만 조정합니다.
+- **Repositories**는 매개변수화된 Dapper SQL과 명시적인 트랜잭션을 담당합니다.
+- **Helpers**는 기능별 Factory·Generator·Calculator처럼 경계가 분명한 보조 책임만 가집니다.
+- **Exceptions**는 클라이언트 계약으로 변환 가능한 업무 실패를 기능별로 구분합니다.
 - **Models/DTOs**는 외부 계약, **Models/Datas**는 SQLite 행을 표현합니다.
 - **GameData/Catalogs**는 배포된 정적 JSON을 검증하고 읽기 전용으로 제공합니다.
 - **Infrastructure**는 DB, 로깅, 보안처럼 외부 기술과 맞닿는 코드를 담당합니다.
 
-`Manager`, `Helper`, `Util`, `Info`, `Data` 같은 모호한 타입명과 새 `Features`, `Content` 폴더는 사용하지 않습니다.
+범용 `Manager`, `Helper`, `Util`, `Info`, `Data` 타입명과 새 `Features`, `Content` 폴더는 사용하지 않습니다.
 
 ### 현재 데이터 기반
 
@@ -206,8 +221,8 @@ SQLite 초기 마이그레이션은 다음 테이블을 만듭니다.
 | 2 | 설정 검증, ZLogger, 민감정보 차단, health | ✅ 완료 |
 | 3 | SQLite 연결, WAL, SQL 마이그레이션, 체크섬 | ✅ 완료 |
 | 4 | 맵·스테이지 JSON Loader와 Catalog | ✅ 완료 |
-| 5 | Google·개발 로그인, JWT, 리프레시 토큰 | ⏳ 예정 |
-| 6 | 캐릭터와 재화 | ⏳ 예정 |
+| 5 | Google·개발 로그인, JWT, 리프레시 토큰 | ✅ 완료 |
+| 6 | 캐릭터와 재화 | ✅ 완료 |
 | 7 | 스테이지 조회·입장·완료·보상 | ⏳ 예정 |
 | 8 | 사용자 방 저장·조회 | ⏳ 예정 |
 | 9 | 통합, publish, 백업·복구, 배포 전환 | ⏳ 예정 |
@@ -220,13 +235,13 @@ Phase 완료와 기능 요구사항 완료는 다를 수 있습니다. 예를 �
 
 | 영역 | RPC | 상태 |
 |---|---|---|
-| 인증 | `auth.login.google` | 구현 전 |
-| 인증 | `auth.login.development` | 구현 전 |
-| 인증 | `auth.token.refresh` | 구현 전 |
-| 인증 | `auth.logout` | 구현 전 |
-| 캐릭터 | `character.getMine` | 구현 전 |
-| 재화 | `currency.getMine` | 구현 전 |
-| 재화 | `currency.listMine` | 구현 전 |
+| 인증 | `auth.login.google` | 완료 |
+| 인증 | `auth.login.development` | Development 조건부 완료 |
+| 인증 | `auth.token.refresh` | 완료 |
+| 인증 | `auth.logout` | 완료 |
+| 캐릭터 | `character.getMine` | 완료 |
+| 재화 | `currency.getMine` | 완료 |
+| 재화 | `currency.listMine` | 완료 |
 | 스테이지 | `stage.get` | 카탈로그 완료, Handler 구현 전 |
 | 스테이지 | `stage.enter` | 구현 전 |
 | 스테이지 | `stage.complete` | 구현 전 |

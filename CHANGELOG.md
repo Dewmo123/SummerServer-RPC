@@ -32,18 +32,24 @@
 - RPC 문자열 ID를 축약 해시로 기록하고 Authorization, 토큰, params, 원문 본문 계열 로그 필드를 차단했습니다.
 - JSON-RPC, SQLite, JWT, 리프레시 토큰, Google 설정을 시작 시 검증하도록 구성했습니다.
 
+### 인증과 게임 상태
+
+- Google·개발 로그인, JWT 액세스 토큰과 리프레시 토큰 회전·재사용 탐지·로그아웃을 구현했습니다.
+- `character.getMine`과 캐릭터 지연 생성, 원자적 경험치 성장 규칙을 구현했습니다.
+- `currency.getMine`, `currency.listMine`과 재화 지연 생성·정렬·원자적 증감을 구현했습니다.
+- 캐릭터와 재화의 최초 생성 경쟁, 경계값, 잔액 부족과 64비트 오버플로 테스트를 추가했습니다.
+
 ### 문서
 
 - 기존 로그인·게임·영속성 프로젝트의 기능을 개념 단위로 분석했습니다.
 - JSON-RPC 2.0, Dapper, SQLite, ZLogger 기반 모노리스 목표 구조를 정의했습니다.
-- 목표 코드 위치를 현재 `Controllers`, `Services`, `Models`, `GameData`, `Infrastructure`, `Rpc` 폴더 구조로 통일했습니다.
+- 목표 코드 위치를 현재 `Controllers`, `Services`, `Repositories`, `Helpers`, `Exceptions`, `Models`, `GameData`, `Infrastructure`, `Rpc` 폴더 구조로 통일했습니다.
 - 인증, 캐릭터, 재화, 스테이지, 사용자 방 기능의 요구사항과 RPC 계약을 작성했습니다.
 - AI 작업 지침, 네이밍, 한국어 주석, 테스트, 커밋 메시지 규칙을 추가했습니다.
 
 ### 예정
 
-- 기능별 Dapper Repository 구현
-- 기능별 RPC 재구현
+- 스테이지와 사용자 방 RPC 재구현
 - 단일 서버 배포 워크플로 전환
 
 ## 2026-08-09
