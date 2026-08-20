@@ -46,6 +46,7 @@ src/SummerProject.Server
 │  └─ EndpointRegistration.cs
 ├─ Common
 ├─ Controllers
+├─ Exceptions
 ├─ Extensions
 ├─ GameData
 │  └─ Catalogs
@@ -56,6 +57,7 @@ src/SummerProject.Server
 │  │  └─ Migrations
 │  ├─ Logging
 │  └─ Security
+├─ Helpers
 ├─ Models
 │  ├─ Datas
 │  ├─ DTOs
@@ -66,10 +68,11 @@ src/SummerProject.Server
 │  ├─ Dispatching
 │  ├─ Serialization
 │  └─ Validation
+├─ Repositories
 └─ Services
 ```
 
-인증, 캐릭터, 재화, 스테이지, 방 구분이 필요하면 `Controllers`, `Services`, `Models` 아래에 `Auth`, `Characters`, `Currencies`, `Stages`, `Rooms` 하위 폴더를 같은 이름으로 만듭니다. 빈 계층을 형식적으로 채우지 않습니다.
+인증, 캐릭터, 재화, 스테이지, 방 구분이 필요하면 `Controllers`, `Services`, `Repositories`, `Helpers`, `Exceptions`, `Models` 아래에 필요한 기능 폴더를 만듭니다. 빈 계층을 형식적으로 채우지 않습니다.
 
 `Controllers`는 ASP.NET MVC Controller 집합이 아닙니다. 외부 HTTP 경로는 계속 `/rpc` 하나이며, 이 폴더에는 `IRpcMethodHandler<TRequest, TResponse>`를 구현하는 JSON-RPC Handler를 둡니다.
 
@@ -127,9 +130,28 @@ IRpcMethodHandler<TRequest, TResponse>
 - Currencies: 재화 지연 생성, 조회, 원자적 증가·차감
 - Stages: 정적 조회, 입장·포기·완료 상태 전이, 보상 트랜잭션
 - Rooms: 맵·함정 검증, 사용자 방 저장·조회
-- 기능별 Repository와 명시적인 트랜잭션 조정
 
-Service는 HTTP 타입이나 JSON-RPC 봉투를 직접 참조하지 않습니다. Repository는 Response DTO가 아니라 `Models/Datas`의 Model 또는 내부 결과를 반환합니다.
+Service는 HTTP 타입, JSON-RPC 봉투, SQL을 직접 참조하지 않습니다.
+
+### Repositories
+
+- 기능별 Dapper SQL 실행
+- SQLite 연결 수명과 명시적인 트랜잭션 처리
+- 조건부 갱신과 유일 제약 경쟁 결과 판정
+
+Repository는 Response DTO가 아니라 `Models/Datas`의 Model 또는 내부 결과를 반환합니다.
+
+### Helpers
+
+- 기능별 Factory와 Generator
+- 결정적 이름 생성, 암호학적 토큰 생성처럼 입력과 출력이 명확한 보조 책임
+
+`Helpers`는 미분류 코드를 모으는 범용 폴더가 아닙니다. 타입 이름은 `Factory`, `Generator`처럼 실제 책임을 드러내야 합니다.
+
+### Exceptions
+
+- 예상 가능한 업무 실패를 나타내는 기능별 예외
+- 전송 계층 오류 형식과 분리된 내부 실패 신호
 
 ### Models
 
@@ -154,7 +176,7 @@ DTO는 DB Model을 참조하지 않으며, DB Model을 JSON-RPC 응답으로 직
 ### Common
 
 - 둘 이상의 영역에서 의미와 불변 조건이 완전히 같은 최소 공통 타입
-- 미분류 코드나 범용 Helper의 임시 보관 금지
+- 미분류 코드의 임시 보관 금지
 
 ### Infrastructure/Database
 
@@ -164,14 +186,13 @@ DTO는 DB Model을 참조하지 않으며, DB Model을 JSON-RPC 응답으로 직
 - 트랜잭션 생성
 - health check
 
-업무 SQL과 Repository는 `Services`의 기능별 하위 폴더에 두고 연결·마이그레이션 공통 기반만 `Infrastructure/Database`에 둡니다.
+업무 SQL과 Repository는 `Repositories`의 기능별 하위 폴더에 두고 연결·마이그레이션 공통 기반만 `Infrastructure/Database`에 둡니다.
 
 Phase 3 구현은 SQL 파일을 프로덕션 어셈블리에 포함하고 시작 시 버전 순서대로 적용합니다. 적용 이력의 이름과 SHA-256 체크섬이 현재 파일과 다르면 요청을 받기 전에 시작을 실패시킵니다.
 
 ### Infrastructure/Security
 
 - JWT 옵션, 발급, 검증
-- 암호학적 난수와 토큰 해시
 - 외부 Google 토큰 검증 Adapter
 
 ### Infrastructure/Logging
@@ -185,13 +206,14 @@ Phase 3 구현은 SQL 파일을 프로덕션 어셈블리에 포함하고 시작
 ```text
 Bootstrap ───────► Rpc
     │              │
-    ├─────────────► Controllers ─────► Services
-    │                                      │
-    ├─────────────► GameData ◄─────────────┤
-    └─────────────► Infrastructure ◄───────┘
+    ├─────────────► Controllers ─────► Services ─────► Repositories
+    │                                      │                 │
+    ├─────────────► GameData ◄─────────────┤                 │
+    └─────────────► Infrastructure ◄───────┴─────────────────┘
 
 Controllers ─────► Models/DTOs
-Services ────────► Models, Models/Datas
+Services ────────► Models, Helpers, Exceptions
+Repositories ────► Models/Datas, Infrastructure/Database
 GameData ────────► Models/GameData
 Models/DTOs ─────► Models/GameData
 ```
@@ -281,6 +303,7 @@ params, 토큰, Authorization 헤더, SQL 매개변수 원문은 기록하지 �
 | 패키지 | 버전 | 선택 근거와 영향 |
 |---|---:|---|
 | Dapper | 2.1.79 | ADR-0003의 명시적 SQL·트랜잭션 원칙에 따라 Phase 3 마이그레이션 이력과 상태 쿼리에 사용합니다. |
+| Microsoft.AspNetCore.Authentication.JwtBearer | 10.0.11 | 설치된 ASP.NET Core 10 패치 기준선과 맞춰 Bearer 서명·발급자·대상·수명을 HTTP 계층에서 검증하고 `CallerProto`로 정규화합니다. 함께 제공되는 OpenID Connect 메타데이터 구성 요소로 Google 공개 서명 키를 조회해 ID 토큰을 검증하므로 Newtonsoft.Json 의존성을 추가하지 않습니다. |
 | Microsoft.Data.Sqlite | 10.0.11 | `net10.0`과 같은 제품군의 SQLite 공급자로, Phase 3 연결 Factory와 실제 임시 DB 통합 테스트에 사용합니다. |
 | ZLogger | 2.5.10 | NFR-OBSERVABILITY-001에 따라 Phase 2에서 UTC JSON 콘솔 출력과 구조화 RPC 요약 로그를 구성했습니다. |
 | Microsoft.AspNetCore.Mvc.Testing | 10.0.11 | `net10.0` 서버와 같은 제품군의 TestServer 기반 통합 테스트를 제공합니다. |

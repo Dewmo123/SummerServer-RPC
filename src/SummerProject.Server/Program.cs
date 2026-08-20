@@ -10,6 +10,7 @@ builder.Services.AddServerServices(builder.Configuration);
 var app = builder.Build();
 
 await app.InitializeServerAsync();
+app.UseAuthentication();
 app.MapServerEndpoints();
 
 app.Run();

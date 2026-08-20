@@ -1,6 +1,7 @@
 using System.Diagnostics;
 
 using SummerProject.Server.Infrastructure.Logging;
+using SummerProject.Server.Infrastructure.Security;
 using SummerProject.Server.Rpc.Contracts;
 using SummerProject.Server.Rpc.Serialization;
 
@@ -10,6 +11,7 @@ internal sealed class JsonRpcDispatcher(
     JsonRpcMethodRegistry registry,
     JsonRpcExceptionMapper exceptionMapper,
     JsonRpcLogWriter logWriter,
+    CallerContext callerContext,
     ILogger<JsonRpcDispatcher> logger)
 {
     public async ValueTask<JsonRpcResponseEnvelope?> DispatchAsync(
@@ -63,7 +65,8 @@ internal sealed class JsonRpcDispatcher(
             Stopwatch.GetElapsedTime(startedAt).TotalMilliseconds,
             outcome,
             response.Error?.Code,
-            exceptionType);
+            exceptionType,
+            callerContext.Caller?.UserId);
 
         // 알림도 처리 결과는 기록하지만 JSON-RPC 규격에 따라 응답 본문은 만들지 않는다.
         return request.IsNotification ? null : response;

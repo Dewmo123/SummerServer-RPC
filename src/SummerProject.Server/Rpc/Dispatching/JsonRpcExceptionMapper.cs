@@ -1,3 +1,4 @@
+using SummerProject.Server.Exceptions.Auth;
 using SummerProject.Server.Rpc.Contracts;
 using SummerProject.Server.Rpc.Validation;
 
@@ -12,7 +13,14 @@ internal sealed class JsonRpcExceptionMapper
             return JsonRpcErrors.InvalidParams(traceId);
         }
 
-        // 예상하지 못한 예외의 세부 정보는 클라이언트 계약에 노출하지 않는다.
-        return JsonRpcErrors.InternalError(traceId);
+        return exception switch
+        {
+            InvalidGoogleTokenException => JsonRpcErrors.InvalidGoogleToken(traceId),
+            InvalidRefreshTokenException => JsonRpcErrors.InvalidRefreshToken(traceId),
+            RefreshTokenReusedException => JsonRpcErrors.RefreshTokenReused(traceId),
+            DevelopmentUserNotFoundException => JsonRpcErrors.DevelopmentUserNotFound(traceId),
+            UnauthenticatedCallerException => JsonRpcErrors.Unauthenticated(traceId),
+            _ => JsonRpcErrors.InternalError(traceId)
+        };
     }
 }

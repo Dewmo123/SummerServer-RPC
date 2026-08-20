@@ -43,7 +43,10 @@
 
 - `Rpc`: JSON-RPC 봉투, 파싱, 검증, 디스패치, 직렬화만 담당한다.
 - `Controllers`: JSON-RPC 메서드 Handler와 요청 진입 조정만 담당하며 업무 규칙이나 SQL을 두지 않는다.
-- `Services`: 인증, 캐릭터, 재화, 스테이지, 방의 업무 규칙과 Repository를 기능별로 구성한다.
+- `Services`: 인증, 캐릭터, 재화, 스테이지, 방의 업무 규칙과 흐름 조정만 기능별로 구성한다.
+- `Repositories`: Dapper SQL과 명시적인 트랜잭션을 기능별로 구성한다.
+- `Helpers`: 특정 기능의 Factory, Generator처럼 생성·변환 책임이 분명한 타입만 기능별로 구성한다.
+- `Exceptions`: 예상 가능한 업무 실패를 나타내는 예외를 기능별로 구성한다.
 - `Models/DTOs`: RPC `Request`, `Response`, `Packet` 타입을 보관한다.
 - `Models/Datas`: Dapper가 DB 행에 매핑하는 `Model` 타입을 보관한다.
 - `Models/GameData`: 검증된 맵, 스테이지, 함정 `Proto`와 정적 열거형을 보관한다.
@@ -53,7 +56,7 @@
 - `Extensions`: 구체적인 대상이 드러나는 등록·변환 확장 메서드만 보관한다.
 - `Common`: 둘 이상의 영역에서 의미와 규칙이 완전히 같은 최소 공통 타입만 보관한다.
 - 기능 간 호출은 공개된 애플리케이션 서비스 또는 명시적인 인터페이스를 사용한다.
-- 범용 `Manager`, `Helper`, `Util`, `Info` 폴더나 타입을 만들지 않는다.
+- 역할이 불명확한 범용 `Manager`, `Helper`, `Util`, `Info` 타입을 만들지 않는다. `Helpers`에는 이름과 책임이 구체적인 타입만 둔다.
 - `Models/Datas`는 현재 구조의 고정 폴더명이며, 역할이 불명확한 `Data` 타입을 새로 만드는 근거로 사용하지 않는다.
 
 ## 클래스 접미사

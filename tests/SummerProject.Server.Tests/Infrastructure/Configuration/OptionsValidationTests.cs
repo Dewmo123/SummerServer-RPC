@@ -17,7 +17,7 @@ public sealed class OptionsValidationTests
     [InlineData("Jwt:SigningKey", "", "JWT 서명 키가 누락되었거나 32바이트보다 짧습니다.")]
     [InlineData("Jwt:SigningKey", "short", "JWT 서명 키가 누락되었거나 32바이트보다 짧습니다.")]
     [InlineData("RefreshToken:LifetimeDays", "0", "리프레시 토큰 수명은 1일 이상 365일 이하여야 합니다.")]
-    [InlineData("Google:ClientIds:0", " ", "Google Client ID 목록에는 빈 값을 넣을 수 없습니다.")]
+    [InlineData("Google:ClientIds:0", " ", "Google Client ID를 하나 이상 설정하고 빈 값을 제거해야 합니다.")]
     public async Task InvalidOptionsFailStartupWithKoreanOperationalLog(
         string key,
         string value,

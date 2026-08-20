@@ -25,7 +25,10 @@ internal static class TestServerSettings
             ["Jwt:SigningKey"] = new string('t', 32),
             ["Jwt:AccessTokenMinutes"] = "60",
             ["Jwt:ClockSkewSeconds"] = "30",
-            ["RefreshToken:LifetimeDays"] = "30"
+            ["RefreshToken:LifetimeDays"] = "30",
+            ["Google:ClientIds:0"] = "test-client-id",
+            ["DevelopmentLogin:Enabled"] = "false",
+            ["DevelopmentLogin:Username"] = "developer"
         };
 }
 

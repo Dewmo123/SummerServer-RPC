@@ -4,6 +4,7 @@ using System.Diagnostics;
 using Microsoft.Extensions.Options;
 using Microsoft.Net.Http.Headers;
 
+using SummerProject.Server.Infrastructure.Security;
 using SummerProject.Server.Rpc.Contracts;
 using SummerProject.Server.Rpc.Dispatching;
 
@@ -16,8 +17,12 @@ internal static class JsonRpcEndpoint
     public static async Task HandleAsync(
         HttpContext context,
         JsonRpcRequestProcessor processor,
+        CallerContext callerContext,
         IOptions<JsonRpcOptions> options)
     {
+        // 인증 미들웨어 결과만 업무 계층이 사용할 수 있는 최소 호출자 정보로 정규화한다.
+        callerContext.Initialize(context.User);
+
         if (!HasSupportedContentType(context.Request.ContentType))
         {
             context.Response.StatusCode = StatusCodes.Status415UnsupportedMediaType;

@@ -12,7 +12,10 @@
 | 폴더 | 허용 역할 |
 |---|---|
 | `Controllers/<기능>` | `IRpcMethodHandler`를 구현하는 JSON-RPC Handler |
-| `Services/<기능>` | 업무 Service, Repository, Validator, Factory |
+| `Services/<기능>` | 업무 Service와 기능 흐름 조정 |
+| `Repositories/<기능>` | Dapper SQL, 조건부 갱신과 트랜잭션을 담당하는 Repository |
+| `Helpers/<기능>` | 역할이 구체적인 Factory, Generator와 변환 타입 |
+| `Exceptions/<기능>` | 예상 가능한 업무 실패 예외 |
 | `Models/DTOs/<기능>` | Request, Response, Packet |
 | `Models/Datas/<기능>` | Dapper DB 행 매핑 Model |
 | `Models/GameData` | 검증된 Map, Stage, Trap Proto와 정적 열거형 |
@@ -187,7 +190,6 @@ room.upsertMine
 Data
 Info
 Manager
-Helper
 Util
 CommonService
 BaseDto
@@ -195,5 +197,7 @@ GenericRepository
 RequestModel
 ResponseModel
 ```
+
+`Helper` 접미사의 범용 타입은 금지합니다. `Helpers` 폴더의 타입도 `GoogleUsernameFactory`, `RefreshTokenGenerator`처럼 책임이 드러나는 이름을 사용합니다.
 
 `Models/Datas`는 현재 폴더 구조를 유지하기 위한 예외입니다. 새 타입 이름으로 `Data`를 사용해서는 안 됩니다. 외부 라이브러리나 규격에서 고정한 이름은 예외이며 래퍼에서 프로젝트 규칙으로 변환합니다.

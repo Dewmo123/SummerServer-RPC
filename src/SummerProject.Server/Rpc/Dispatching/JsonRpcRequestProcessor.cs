@@ -1,6 +1,7 @@
 using System.Diagnostics;
 
 using SummerProject.Server.Infrastructure.Logging;
+using SummerProject.Server.Infrastructure.Security;
 using SummerProject.Server.Rpc.Serialization;
 using SummerProject.Server.Rpc.Validation;
 
@@ -11,6 +12,7 @@ internal sealed class JsonRpcRequestProcessor(
     JsonRpcDispatcher dispatcher,
     JsonRpcResponseWriter responseWriter,
     JsonRpcLogWriter logWriter,
+    CallerContext callerContext,
     ILogger<JsonRpcRequestProcessor> logger)
 {
     public async ValueTask<byte[]?> ProcessAsync(
@@ -35,7 +37,8 @@ internal sealed class JsonRpcRequestProcessor(
                     item.Method,
                     Stopwatch.GetElapsedTime(startedAt).TotalMilliseconds,
                     item.SuppressResponse ? "notification" : "error",
-                    item.ErrorResponse.Error!.Code);
+                    item.ErrorResponse.Error!.Code,
+                    userId: callerContext.Caller?.UserId);
 
                 if (!item.SuppressResponse)
                 {

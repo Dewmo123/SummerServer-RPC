@@ -66,15 +66,25 @@ internal static class OptionsRegistration
         services
             .AddOptions<GoogleAuthOptions>()
             .Bind(configuration.GetSection(GoogleAuthOptions.SectionName))
-            // Google 로그인이 구현되기 전에는 빈 목록을 허용하되, 제공된 값은 모두 유효해야 한다.
             .Validate(
                 options => options.ClientIds is not null
+                    && options.ClientIds.Length > 0
                     && options.ClientIds.All(clientId => !string.IsNullOrWhiteSpace(clientId)),
-                "Google Client ID 목록에는 빈 값을 넣을 수 없습니다.")
+                "Google Client ID를 하나 이상 설정하고 빈 값을 제거해야 합니다.")
             .Validate(
                 options => options.ClientIds is not null
                     && options.ClientIds.Distinct(StringComparer.Ordinal).Count() == options.ClientIds.Length,
                 "Google Client ID 목록에는 중복 값을 넣을 수 없습니다.")
+            .ValidateOnStart();
+
+        services
+            .AddOptions<DevelopmentLoginOptions>()
+            .Bind(configuration.GetSection(DevelopmentLoginOptions.SectionName))
+            .Validate(
+                options => !options.Enabled
+                    || (!string.IsNullOrWhiteSpace(options.Username)
+                        && options.Username.Length <= 50),
+                "개발 로그인 사용자명은 1자 이상 50자 이하여야 합니다.")
             .ValidateOnStart();
 
         return services;

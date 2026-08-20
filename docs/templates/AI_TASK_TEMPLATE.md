@@ -43,5 +43,5 @@
 ```text
 기존 SummerLoginServer, SummerGameServer, Persistence의 코드 구조와 이름을 복사하지 말고 승인된 문서 계약만 기준으로 구현하라. 미결정 사항을 추측하지 말고 문서에 기록하라. 변경된 주석은 COMMENT_GUIDE.md에 따라 한국어로 작성하라.
 
-신규 코드는 현재 폴더 구조를 따른다. JSON-RPC Handler는 `Controllers`, 업무 Service와 Repository는 `Services`, 외부 DTO와 DB 행 Model은 각각 `Models/DTOs`, `Models/Datas`, 정적 맵·스테이지는 `GameData/Catalogs`에 둔다. `Features` 또는 `Content` 폴더를 새로 만들지 않는다.
+신규 코드는 현재 폴더 구조를 따른다. JSON-RPC Handler는 `Controllers`, 업무 흐름은 `Services`, SQL 접근은 `Repositories`, 생성 보조 타입은 `Helpers`, 업무 예외는 `Exceptions`, 외부 DTO와 DB 행 Model은 각각 `Models/DTOs`, `Models/Datas`, 정적 맵·스테이지는 `GameData/Catalogs`에 둔다. `Features` 또는 `Content` 폴더를 새로 만들지 않는다.
 ```
