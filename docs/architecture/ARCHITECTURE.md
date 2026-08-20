@@ -58,7 +58,8 @@ src/SummerProject.Server
 │  └─ Security
 ├─ Models
 │  ├─ Datas
-│  └─ DTOs
+│  ├─ DTOs
+│  └─ GameData
 ├─ Properties
 ├─ Rpc
 │  ├─ Contracts
@@ -134,6 +135,7 @@ Service는 HTTP 타입이나 JSON-RPC 봉투를 직접 참조하지 않습니다
 
 - `Models/DTOs`: 외부 RPC의 Request, Response, Packet
 - `Models/Datas`: Dapper가 SQLite 행에 매핑하는 Model
+- `Models/GameData`: 검증된 Map, Stage, Trap Proto와 정적 열거형
 - `Models`: 값 객체 `Proto`, 열거형과 두 모델 계층에서 공유하는 명시적 계약
 
 DTO는 DB Model을 참조하지 않으며, DB Model을 JSON-RPC 응답으로 직접 직렬화하지 않습니다.
@@ -190,12 +192,15 @@ Bootstrap ───────► Rpc
 
 Controllers ─────► Models/DTOs
 Services ────────► Models, Models/Datas
+GameData ────────► Models/GameData
+Models/DTOs ─────► Models/GameData
 ```
 
 - RPC는 `Controllers`의 Handler를 인터페이스로 호출합니다.
 - Controller Handler는 HTTP 타입에 의존하지 않고 Service를 호출합니다.
 - Controller Handler는 `ClaimsPrincipal` 대신 정규화된 `CallerProto`를 받습니다.
 - `Models/DTOs`는 `Models/Datas`의 DB Model을 참조하지 않습니다.
+- 정적 JSON 검증과 카탈로그는 `Models/GameData`의 불변 Proto만 생성합니다.
 - Repository는 Response를 반환하지 않고 Model 또는 도메인 결과를 반환합니다.
 - 기능 간 직접 Repository 호출은 피하고 공개된 Service를 사용합니다.
 

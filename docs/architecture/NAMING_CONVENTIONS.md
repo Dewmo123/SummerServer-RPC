@@ -15,6 +15,7 @@
 | `Services/<기능>` | 업무 Service, Repository, Validator, Factory |
 | `Models/DTOs/<기능>` | Request, Response, Packet |
 | `Models/Datas/<기능>` | Dapper DB 행 매핑 Model |
+| `Models/GameData` | 검증된 Map, Stage, Trap Proto와 정적 열거형 |
 | `Models/<기능>` | Proto, 열거형과 내부 불변값 |
 | `GameData/Catalogs/Maps` | 맵 JSON, Map Catalog와 검증 타입 |
 | `GameData/Catalogs/Stages` | 스테이지 JSON, Stage Catalog와 검증 타입 |
@@ -23,7 +24,7 @@
 | `Extensions` | 대상이 명확한 등록·변환 확장 메서드 |
 | `Common` | 둘 이상의 영역에서 의미가 완전히 같은 최소 공통 타입 |
 
-기능 하위 폴더는 `Auth`, `Characters`, `Currencies`, `Stages`, `Rooms`를 사용합니다. `Models/Datas`는 현재 디렉터리 이름일 뿐이며 타입 접미사는 계속 `Model`을 사용합니다.
+업무 기능 하위 폴더는 `Auth`, `Characters`, `Currencies`, `Stages`, `Rooms`를 사용하고 정적 카탈로그 값은 `Models/GameData`에 둡니다. `Models/Datas`는 현재 디렉터리 이름일 뿐이며 타입 접미사는 계속 `Model`을 사용합니다.
 
 ## 3. 필수 접미사
 

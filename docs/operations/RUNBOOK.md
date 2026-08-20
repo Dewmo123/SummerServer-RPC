@@ -35,7 +35,7 @@ dotnet publish src/SummerProject.Server `
 3. 서버를 시작합니다.
 4. 시작 로그에서 설정 검증, DB 마이그레이션, 카탈로그 적재 완료를 확인합니다.
 5. `GET /health`가 성공인지 확인합니다.
-6. 공개 `stage.get`과 개발/운영에 맞는 인증 smoke test를 실행합니다.
+6. Phase 7 이후에는 공개 `stage.get`과 개발/운영에 맞는 인증 smoke test를 실행합니다.
 
 서버 시작 중 마이그레이션 또는 카탈로그 검증이 실패하면 트래픽을 받지 않아야 합니다.
 
@@ -59,6 +59,8 @@ Invoke-RestMethod -Method Get -Uri "https://localhost:5001/health"
 Phase 3 health check는 `SELECT 1`과 적용된 모든 마이그레이션의 이름·체크섬 일치를 함께 검사합니다. 실패 응답은 상태만 공개하므로 상세 원인은 시작 로그와 `schema_migrations`를 별도로 점검합니다.
 
 ## 5. 대표 RPC 확인
+
+다음 확인은 `stage.get` Handler가 추가되는 Phase 7 이후에 사용합니다. Phase 4는 카탈로그 적재 준비까지만 포함합니다.
 
 ```powershell
 $body = @{

@@ -111,7 +111,9 @@ MySQL의 row-level lock과 `SELECT ... FOR UPDATE`를 SQLite에서 그대로 사
 - 최소 클리어 시간과 보상 범위
 - DB가 참조하는 카탈로그 ID 제거 호환성
 
-현재 Map1/Stage1의 tile 배열 길이 정책은 미결정이므로 구현 전 제품 확인이 필요합니다.
+현재 Map1/Stage1의 tile 배열 길이 정책은 미결정이므로 Phase 4 Loader는 `width × height` 일치를 강제하지 않으며 제품 확인이 필요합니다.
+
+Phase 4의 초기 `Map1.json`, `Stage1.json`은 승인된 RPC 계약 예시와 현행 동작 인벤토리에서 확인된 ID·크기·보상·SawTrap 정보를 기준으로 구성했습니다. 원본 JSON 전체가 현재 저장소에 없으므로 실제 배포 전 타일 내용과 함정 위치·회전을 콘텐츠 원본과 대조해야 합니다.
 
 ## 7. 배포 전환
 

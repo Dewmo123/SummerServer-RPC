@@ -1,3 +1,6 @@
+using SummerProject.Server.GameData.Catalogs;
+using SummerProject.Server.GameData.Catalogs.Maps;
+using SummerProject.Server.GameData.Catalogs.Stages;
 using SummerProject.Server.Infrastructure.Database;
 using SummerProject.Server.Infrastructure.Logging;
 using SummerProject.Server.Rpc.Dispatching;
@@ -21,6 +24,11 @@ internal static class ServiceRegistration
         services.AddSingleton<SqliteConnectionFactory>();
         services.AddSingleton<EmbeddedSqlMigrationSource>();
         services.AddSingleton<SqliteMigrationRunner>();
+        services.AddSingleton<JsonCatalogLoader>();
+        services.AddSingleton(serviceProvider =>
+            serviceProvider.GetRequiredService<JsonCatalogLoader>().LoadMapCatalog());
+        services.AddSingleton(serviceProvider =>
+            serviceProvider.GetRequiredService<JsonCatalogLoader>().LoadStageCatalog());
 
         // 상태가 없는 프로토콜 구성 요소는 재사용하고 요청 조정 객체만 요청 범위로 분리한다.
         services.AddSingleton<JsonRpcSerializerOptions>();

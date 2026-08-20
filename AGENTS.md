@@ -46,6 +46,7 @@
 - `Services`: 인증, 캐릭터, 재화, 스테이지, 방의 업무 규칙과 Repository를 기능별로 구성한다.
 - `Models/DTOs`: RPC `Request`, `Response`, `Packet` 타입을 보관한다.
 - `Models/Datas`: Dapper가 DB 행에 매핑하는 `Model` 타입을 보관한다.
+- `Models/GameData`: 검증된 맵, 스테이지, 함정 `Proto`와 정적 열거형을 보관한다.
 - `Models`: 공통 값 객체와 열거형을 보관하되 DTO와 DB Model의 경계를 유지한다.
 - `Infrastructure`: SQLite, Dapper, 보안, 로깅과 같은 외부 기술을 담당한다.
 - `GameData/Catalogs`: 맵과 스테이지 정적 JSON 및 읽기 전용 Catalog를 보관한다.

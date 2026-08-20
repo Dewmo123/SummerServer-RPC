@@ -135,6 +135,8 @@ Google Client ID 자체는 일반적으로 비밀이 아니지만 환경별 설�
 
 Phase 3 서버는 시작 시 SQLite 외래 키, busy timeout, WAL과 마이그레이션 체크섬을 검증합니다. `/health`는 연결과 `SELECT 1`, 적용된 마이그레이션 상태를 확인하지만 DB 전체 경로나 내부 오류는 응답하지 않습니다.
 
+Phase 4 서버는 DB 마이그레이션 전에 `Catalog:RootPath`의 맵과 스테이지 JSON 전체를 검증합니다. 오류에는 `Maps/Map1.json` 같은 상대 파일명만 기록하고 전체 배포 경로는 노출하지 않습니다.
+
 ## 8. 설정 변경 관리
 
 - 외부 계약이나 보안 수준에 영향을 주는 기본값 변경은 CHANGELOG와 관련 문서를 갱신합니다.

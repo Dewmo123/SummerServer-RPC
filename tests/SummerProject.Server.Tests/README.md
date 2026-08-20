@@ -9,6 +9,7 @@
 | `Rpc` | JSON-RPC 단일·알림·배치 적합성 |
 | `Controllers` | JSON-RPC Handler의 요청·응답과 서비스 연결 |
 | `Services` | 인증·캐릭터·재화·스테이지·방 업무 규칙과 Repository |
+| `GameData/Catalogs` | 정적 JSON 적재, 불변 변환, 범위 검증과 시작 실패 |
 | `Fixtures` | 여러 테스트 영역에서 공유하는 명시적 테스트 fixture |
 | `Infrastructure/Database` | 마이그레이션, 제약, SQLite 연결 |
 | `Infrastructure/Configuration` | Options 바인딩과 시작 검증 |

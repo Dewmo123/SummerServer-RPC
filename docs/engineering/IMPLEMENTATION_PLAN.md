@@ -88,7 +88,7 @@
 작업:
 
 - `GameData/Catalogs/Maps`, `GameData/Catalogs/Stages` 경로 사용
-- Map/Stage JSON 스키마와 Packet/Proto 분리
+- Map/Stage JSON 스키마와 `Models/DTOs/GameData` Packet, `Models/GameData` Proto 분리
 - `System.Text.Json` 카탈로그 Loader
 - ID 중복, 크기, 배열, 함정, 보상 검증
 - 기존 Map1/Stage1 데이터를 목표 위치로 변환

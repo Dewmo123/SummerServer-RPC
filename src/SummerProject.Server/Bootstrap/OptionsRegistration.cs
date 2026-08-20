@@ -1,5 +1,6 @@
 using System.Text;
 
+using SummerProject.Server.GameData.Catalogs;
 using SummerProject.Server.Infrastructure.Database;
 using SummerProject.Server.Infrastructure.Security;
 using SummerProject.Server.Rpc.Contracts;
@@ -22,6 +23,14 @@ internal static class OptionsRegistration
             .Validate(options => options.MaxRequestBodyBytes > 0, "JSON-RPC 요청 본문 제한은 1 이상이어야 합니다.")
             .Validate(options => options.MaxBatchSize > 0, "JSON-RPC 배치 제한은 1 이상이어야 합니다.")
             .Validate(options => options.MaxJsonDepth > 0, "JSON 최대 깊이는 1 이상이어야 합니다.")
+            .ValidateOnStart();
+
+        services
+            .AddOptions<CatalogOptions>()
+            .Bind(configuration.GetSection(CatalogOptions.SectionName))
+            .Validate(
+                options => !string.IsNullOrWhiteSpace(options.RootPath),
+                "정적 카탈로그 루트 경로는 비어 있을 수 없습니다.")
             .ValidateOnStart();
 
         services

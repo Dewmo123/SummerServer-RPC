@@ -16,6 +16,7 @@ internal static class TestServerSettings
             ["JsonRpc:MaxRequestBodyBytes"] = "65536",
             ["JsonRpc:MaxBatchSize"] = "50",
             ["JsonRpc:MaxJsonDepth"] = "32",
+            ["Catalog:RootPath"] = "GameData/Catalogs",
             ["Database:Path"] = "test-data/test.db",
             ["Database:BusyTimeoutMilliseconds"] = "5000",
             ["Database:UseWriteAheadLogging"] = "true",

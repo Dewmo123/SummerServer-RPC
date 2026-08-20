@@ -12,6 +12,7 @@ public sealed class OptionsValidationTests
     [Theory]
     [InlineData("JsonRpc:Path", "/other", "JSON-RPC 경로는 외부 계약에 따라 /rpc여야 합니다.")]
     [InlineData("JsonRpc:MaxBatchSize", "0", "JSON-RPC 배치 제한은 1 이상이어야 합니다.")]
+    [InlineData("Catalog:RootPath", "", "정적 카탈로그 루트 경로는 비어 있을 수 없습니다.")]
     [InlineData("Database:Path", "", "SQLite DB 경로는 비어 있을 수 없습니다.")]
     [InlineData("Jwt:SigningKey", "", "JWT 서명 키가 누락되었거나 32바이트보다 짧습니다.")]
     [InlineData("Jwt:SigningKey", "short", "JWT 서명 키가 누락되었거나 32바이트보다 짧습니다.")]

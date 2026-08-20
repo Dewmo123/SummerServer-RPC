@@ -1,0 +1,25 @@
+{
+  "stageId": 1,
+  "width": 16,
+  "height": 8,
+  "tiles": [true, false],
+  "traps": [
+    {
+      "type": 0,
+      "position": {
+        "x": 3,
+        "y": 0,
+        "z": 0
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0,
+        "w": 1.0
+      }
+    }
+  ],
+  "minimumClearSeconds": 1,
+  "rewardExp": 10,
+  "rewardGold": 100
+}

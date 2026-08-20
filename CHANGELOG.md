@@ -20,6 +20,12 @@
 - 내장 SQL 마이그레이션 Runner, SHA-256 체크섬 검증과 `0001_initial.sql` 스키마를 추가했습니다.
 - SQLite 연결·마이그레이션 상태를 검사하는 health check와 실제 임시 DB 통합 테스트를 추가했습니다.
 
+### 정적 카탈로그
+
+- `Map1.json`, `Stage1.json`을 `GameData/Catalogs`에 추가하고 빌드·게시 산출물에 포함했습니다.
+- 맵과 스테이지를 시작 시 엄격하게 역직렬화하고 ID, 크기, 배열, 함정과 보상 범위를 검증합니다.
+- 검증된 값만 불변 `MapCatalog`, `StageCatalog`에 적재하고 손상된 카탈로그에서는 시작을 중단합니다.
+
 ### 관측성과 설정
 
 - ZLogger JSON 콘솔 출력과 JSON-RPC 요청별 구조화 요약 로그를 구성했습니다.

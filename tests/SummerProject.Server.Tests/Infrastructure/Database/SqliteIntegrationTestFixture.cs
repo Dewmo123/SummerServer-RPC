@@ -26,7 +26,13 @@ internal sealed class SqliteIntegrationTestFixture : IDisposable
             return;
         }
 
-        SqliteConnection.ClearAllPools();
+        // 병렬 테스트의 활성 연결을 닫지 않도록 이 fixture의 DB 연결 풀만 비운다.
+        using SqliteConnection connection = new(new SqliteConnectionStringBuilder
+        {
+            DataSource = DatabasePath,
+            Mode = SqliteOpenMode.ReadWriteCreate
+        }.ToString());
+        SqliteConnection.ClearPool(connection);
         if (!Directory.Exists(DirectoryPath))
         {
             return;
