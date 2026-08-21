@@ -2,8 +2,6 @@
 
 기존 비동기 멀티플레이 게임 서버를 **.NET 10, ASP.NET Core, JSON-RPC 2.0, SQLite, Dapper** 기반의 모듈형 모노리스로 재구성한 프로젝트입니다.
 
-이 문서는 기능 사용법보다 저장소의 구조, 계층별 책임, 요청 처리 흐름과 AI를 사용한 개발 과정을 설명합니다.
-
 ---
 
 ## 목차
@@ -63,7 +61,11 @@ SummerServer-RPC
 └──────────────────────────────────────────────┘
 ```
 
-[`Rpc`](src/SummerProject.Server/Rpc)는 JSON-RPC 규격만 처리하고 게임 업무를 알지 못합니다. [`Controllers`](src/SummerProject.Server/Controllers)는 외부 요청을 Service로 연결하고, [`Services`](src/SummerProject.Server/Services)는 업무 흐름을 조정합니다. SQL은 [`Repositories`](src/SummerProject.Server/Repositories), SQLite·JWT·로깅 같은 외부 기술은 [`Infrastructure`](src/SummerProject.Server/Infrastructure)에만 둡니다.
+[`Rpc`](src/SummerProject.Server/Rpc)는 JSON-RPC 규격만 처리하고 게임 업무를 알지 못합니다. <br/>
+[`Controllers`](src/SummerProject.Server/Controllers)는 외부 요청을 Service로 연결하고, <br/>
+[`Services`](src/SummerProject.Server/Services)는 업무 흐름을 조정합니다. <br/>
+SQL은 [`Repositories`](src/SummerProject.Server/Repositories),<br/>
+ SQLite·JWT·로깅 같은 외부 기술은 [`Infrastructure`](src/SummerProject.Server/Infrastructure)에만 둡니다.
 
 프로젝트를 기능별 `.csproj`로 나누는 대신 각 계층 아래에서 같은 기능 구분을 사용합니다.
 
@@ -261,4 +263,8 @@ AI 작업 규칙은 대화에만 두지 않고 Markdown 문서로 관리했습�
 | [TRACEABILITY.md](docs/migration/TRACEABILITY.md) | 요구사항과 구현·테스트의 연결 및 완료 판단 |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | 문서 확인부터 구현, 검증, 추적성 갱신까지의 작업 절차 |
 
-[AGENTS.md](AGENTS.md)가 저장소 전체 규칙을 제공하고, [docs/README.md](docs/README.md)가 읽을 문서를 안내합니다. 개별 작업은 [AI_TASK_TEMPLATE.md](docs/templates/AI_TASK_TEMPLATE.md) 형식으로 범위를 제한하며, 구현 후에는 [TEST_STRATEGY.md](docs/engineering/TEST_STRATEGY.md)와 [TRACEABILITY.md](docs/migration/TRACEABILITY.md)를 기준으로 완료 여부를 확인합니다. 주석과 커밋 메시지는 각각 별도 가이드를 적용해 매 작업에서 같은 기준을 반복하도록 구성했습니다.
+[AGENTS.md](AGENTS.md)가 저장소 전체 규칙을 제공하고,<br/>
+[docs/README.md](docs/README.md)가 읽을 문서를 안내합니다.<br/>
+개별 작업은 [AI_TASK_TEMPLATE.md](docs/templates/AI_TASK_TEMPLATE.md) 형식으로 범위를 제한하며,<br/>
+구현 후에는 [TEST_STRATEGY.md](docs/engineering/TEST_STRATEGY.md)와 [TRACEABILITY.md](docs/migration/TRACEABILITY.md)를 기준으로 완료 여부를 확인합니다.<br/>
+주석과 커밋 메시지는 각각 별도 가이드를 적용해 매 작업에서 같은 기준을 반복하도록 구성했습니다.
